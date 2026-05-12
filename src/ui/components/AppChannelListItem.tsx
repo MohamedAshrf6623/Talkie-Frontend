@@ -6,6 +6,8 @@ import {
   getPresenceLabel,
 } from '../../hooks/usePresence';
 
+import { useThemedColors } from '../theme/colors';
+
 export type AppCategoryItemProps = {
   label: string;
   active?: boolean;
@@ -24,6 +26,7 @@ export default function AppChannelListItem({
   const presence = useUserPresence(isDm ? userId : undefined);
   const presenceColor = getPresenceColor(presence.status);
   const presenceLabel = getPresenceLabel(presence.status);
+  const colors = useThemedColors();
 
   return (
     <Box
@@ -31,13 +34,13 @@ export default function AppChannelListItem({
       justifyContent="start"
       alignItems="center"
       padding="3px"
-      backgroundColor={active ? 'gray.500' : 'transparent'}
+      backgroundColor={active ? colors.darkLight : 'transparent'}
       borderRadius="3px"
       marginY="2px"
       cursor="pointer"
       onClick={onClick}
       _hover={{
-        backgroundColor: 'gray.600',
+        backgroundColor: colors.darkLight,
       }}
       position="relative"
       title={isDm ? `${label} - ${presenceLabel}` : undefined}
@@ -55,7 +58,7 @@ export default function AppChannelListItem({
         />
       ) : (
         <Text
-          color="gray.300"
+          color={colors.lightGray}
           marginRight="10px"
           fontStyle="italic"
           fontSize="xl"
@@ -63,10 +66,10 @@ export default function AppChannelListItem({
           #
         </Text>
       )}
-      <Text color="white">{label}</Text>
+      <Text color={colors.white}>{label}</Text>
       <Box flex="1" />
       {isDm && presence.status !== 'offline' && (
-        <Text color="whiteAlpha.500" fontSize="xs" marginRight="4px">
+        <Text color={colors.textMuted} fontSize="xs" marginRight="4px">
           ●
         </Text>
       )}

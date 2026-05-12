@@ -1,8 +1,9 @@
 import { Avatar, Box } from "@chakra-ui/react";
 import React from "react";
-import { colors } from "../theme/colors";
+import { useThemedColors } from "../theme/colors";
 
 export default function AppPlaceholderItem() {
+  const colors = useThemedColors();
   return (
     <Box display="flex" marginY="15px">
       <Avatar backgroundColor={colors.grayMedium}></Avatar>

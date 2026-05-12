@@ -9,19 +9,26 @@ import {
   Box,
   Button,
   Center,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalHeader,
+  ModalOverlay,
   HStack,
   Menu,
   MenuButton,
   MenuItem,
   MenuList,
   Text,
+  useDisclosure,
 } from '@chakra-ui/react';
 import React, { useState } from 'react';
 import { useHistory } from 'react-router';
 import { getChatSocket, supabase } from '../../app/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { OTHER_REDIRECT_ROUTE } from '../../routes/defaultRoute';
-import { colors } from '../theme/colors';
+import { useThemedColors } from '../theme/colors';
 import AppCategoryList from './AppCategoryList';
 import AppIconButton from './AppIconButton';
 import { logoutApi } from '../../app/services/auth-api.service';
@@ -38,6 +45,7 @@ function LogoAvatar(props: { size?: any }) {
 }
 
 export default function AppLeftSidebar() {
+  const colors = useThemedColors();
   return (
     <Box
       width="300px"
@@ -56,6 +64,7 @@ export default function AppLeftSidebar() {
 }
 
 function AppLeftSidebarTopbar() {
+  const colors = useThemedColors();
   const history = useHistory();
   const user = useAuth();
 
@@ -73,7 +82,7 @@ function AppLeftSidebarTopbar() {
       <Menu>
         <MenuButton
           as={Button}
-          color="white"
+          color={colors.dark}
           width="full"
           backgroundColor="transparent"
           rightIcon={<ChevronDownIcon />}
@@ -111,8 +120,14 @@ function AppLeftSidebarTopbar() {
 }
 
 function BottomSection() {
+  const colors = useThemedColors();
   const user = useAuth();
   const history = useHistory();
+  const {
+    isOpen: isInfoOpen,
+    onOpen: onInfoOpen,
+    onClose: onInfoClose,
+  } = useDisclosure();
   const [presenceStatus, setPresenceStatus] = useState<
     'online' | 'dnd' | 'idle' | 'offline'
   >('online');
@@ -172,18 +187,20 @@ function BottomSection() {
         <LogoAvatar size="sm" />
       </Center>
       <Box marginX="10px">
-        <Text color="white" maxW="100px" fontSize="sm" isTruncated>
+        <Text color={colors.white} maxW="100px" fontSize="sm" isTruncated>
           {user?.email ?? 'Guest'}
         </Text>
 
-        <Text color="gray.500" fontSize="xs">
+        <Text color={colors.lightGray} fontSize="xs">
           {statusEmoji[presenceStatus]} {presenceStatus}
         </Text>
       </Box>
       <HStack>
         <AppIconButton
-          ariaLabel="Mute mic"
+          ariaLabel="Open info"
+          tooltip="Info"
           icon={<InfoOutlineIcon />}
+          onClick={onInfoOpen}
         ></AppIconButton>
         <AppIconButton
           ariaLabel="To other"
@@ -201,7 +218,7 @@ function BottomSection() {
           <MenuButton
             as={Button}
             backgroundColor="transparent"
-            color="white"
+            color={colors.dark}
             padding="0"
             minWidth="auto"
             height="auto"
@@ -250,6 +267,21 @@ function BottomSection() {
           </MenuList>
         </Menu>
       </HStack>
+
+      <Modal isOpen={isInfoOpen} onClose={onInfoClose} isCentered size="sm">
+        <ModalOverlay />
+        <ModalContent backgroundColor={colors.grayLight} color={colors.dark}>
+          <ModalHeader>Talkie Info</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody paddingBottom="20px">
+            <Text fontSize="sm" color={colors.lightGray}>
+              This button opens a quick info panel. You can use the gear for
+              settings, the refresh icon for the related action, and the dot
+              menu for presence and logout.
+            </Text>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 }

@@ -3,6 +3,8 @@ import { Box, Text } from "@chakra-ui/layout";
 import { Tooltip } from "@chakra-ui/tooltip";
 import React from "react";
 
+import { useThemedColors } from "../theme/colors";
+
 export type AppMemberListItemProps = {
   name: string;
   isOwner?: boolean;
@@ -12,6 +14,7 @@ export default function AppMemberListItem({
   name,
   isOwner,
 }: AppMemberListItemProps) {
+  const colors = useThemedColors();
   return (
     <Box
       display="flex"
@@ -21,12 +24,12 @@ export default function AppMemberListItem({
       borderRadius="3px"
       cursor="pointer"
       _hover={{
-        backgroundColor: "gray.600",
+        backgroundColor: colors.darkLight,
       }}
     >
       <Avatar size="sm" />
       <Box width="10px" />
-      <Text color="white">{name}</Text>
+      <Text color={colors.white}>{name}</Text>
       {isOwner ? (
         <Box marginX="5px">
           <Tooltip aria-label="server owner tooltip" label="Server owner">

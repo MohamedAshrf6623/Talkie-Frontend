@@ -6,6 +6,8 @@ import AppChannelListItem from './AppChannelListItem';
 import { fetchVisibleChannelsByServer } from '../../app/services/channel.service';
 import { useAuth } from '../../hooks/useAuth';
 
+import { useThemedColors } from '../theme/colors';
+
 type AppCategoryChannelListProps = {
   server?: any;
 };
@@ -13,6 +15,7 @@ type AppCategoryChannelListProps = {
 export default function AppCategoryChannelList({
   server,
 }: AppCategoryChannelListProps) {
+  const colors = useThemedColors();
   const [channels, setChannels] = useState<any[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
   const history = useHistory();
@@ -60,7 +63,7 @@ export default function AppCategoryChannelList({
 
   return (
     <Box marginY="5px">
-      <Text color="white" fontSize="xs" fontWeight="bold" marginBottom="5px">
+      <Text color={colors.white} fontSize="xs" fontWeight="bold" marginBottom="5px">
         <ChevronRightIcon /> {serverName.toUpperCase()}
       </Text>
       {errorMessage ? (
@@ -78,7 +81,7 @@ export default function AppCategoryChannelList({
           />
         ))
       ) : (
-        <Text color="whiteAlpha.500" fontSize="xs" paddingLeft="20px">
+        <Text color={colors.textMuted} fontSize="xs" paddingLeft="20px">
           No channels
         </Text>
       )}

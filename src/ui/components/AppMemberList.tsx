@@ -5,7 +5,10 @@ import AppMemberGroup from './AppMemberGroup';
 import AppMemberListItem from './AppMemberListItem';
 import { fetchCurrentUser } from '../../app/services/user.service';
 
+import { useThemedColors } from '../theme/colors';
+
 export default function AppMemberList() {
+  const colors = useThemedColors();
   const [users, setUsers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -54,7 +57,7 @@ export default function AppMemberList() {
       }}
     >
       {isLoading ? (
-        <Text color="whiteAlpha.600" fontSize="sm" marginBottom="12px">
+        <Text color={colors.textDim} fontSize="sm" marginBottom="12px">
           Loading members...
         </Text>
       ) : null}
@@ -67,7 +70,7 @@ export default function AppMemberList() {
 
       {users.length ? (
         <Box marginBottom="25px">
-          <Text color="gray.400" fontSize="xs" fontWeight="bold">
+          <Text color={colors.lightGray} fontSize="xs" fontWeight="bold">
             MEMBERS - {users.length}
           </Text>
 

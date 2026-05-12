@@ -1,9 +1,10 @@
 import { Box } from "@chakra-ui/layout";
 import React from "react";
-import { colors } from "../theme/colors";
+import { useThemedColors } from "../theme/colors";
 import AppMemberList from "./AppMemberList";
 
 export default function AppRightSidebar() {
+  const colors = useThemedColors();
   return (
     <Box
       width="325px"

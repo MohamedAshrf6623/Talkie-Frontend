@@ -3,13 +3,14 @@ import { Box } from "@chakra-ui/layout";
 import AppChatContainer from "./AppChatContainer";
 import AppMainTopbar from "./AppMainTopbar";
 import AppRightSidebar from "./AppRightSidebar";
-import { colors } from "../theme/colors";
+import { useThemedColors } from "../theme/colors";
 
 export type AppMainContentProps = {
   children: React.ReactNode;
 };
 
 export default function AppMainContent({ children }: AppMainContentProps) {
+  const colors = useThemedColors();
   return (
     <Box
       backgroundColor={colors.grayLight}

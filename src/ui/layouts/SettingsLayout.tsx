@@ -2,7 +2,7 @@ import { CloseIcon } from "@chakra-ui/icons";
 import { Box, Divider, Link, Text, IconButton } from "@chakra-ui/react";
 import React from "react";
 import { Link as RouterLink, useHistory } from "react-router-dom";
-import { colors } from "../theme/colors";
+import { useThemedColors } from "../theme/colors";
 import { supabase } from "../../app/supabase";
 
 export type SettingsLayoutProps = {
@@ -10,6 +10,7 @@ export type SettingsLayoutProps = {
 };
 
 export default function SettingsLayout({ children }: SettingsLayoutProps) {
+  const colors = useThemedColors();
   const history = useHistory();
 
   return (
@@ -22,7 +23,7 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
         overflowY="scroll"
         paddingX="30px"
         paddingY="50px"
-        color="white"
+        color={colors.dark}
         position="relative"
       >
         <Box position="absolute" top="20px" right="30px">
@@ -31,7 +32,7 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
             icon={<CloseIcon />}
             variant="ghost"
             color="gray.400"
-            _hover={{ color: 'white', backgroundColor: 'whiteAlpha.200' }}
+            _hover={{ color: colors.dark, backgroundColor: 'whiteAlpha.200' }}
             onClick={() => history.push('/')}
           />
         </Box>
@@ -42,6 +43,7 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
 }
 
 function SettingsLeftSidebar() {
+  const colors = useThemedColors();
   const history = useHistory();
   return (
     <Box
@@ -101,6 +103,7 @@ function SettingsListItem({
   onClick,
   children,
 }: SettingsListItemProps) {
+  const colors = useThemedColors();
   return (
     <Box
       onClick={onClick}
@@ -110,7 +113,7 @@ function SettingsListItem({
       marginY="2px"
       borderRadius="sm"
       cursor="pointer"
-      color={!!color ? color : active ? "white" : "whiteAlpha.500"}
+      color={!!color ? color : active ? colors.dark : "whiteAlpha.500"}
       backgroundColor={active ? colors.lightGray : "transparent"}
       _hover={{
         backgroundColor: !!hoverBackgroundColor

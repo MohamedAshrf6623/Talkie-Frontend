@@ -10,9 +10,10 @@ import {
 } from '../../app/services/server.service';
 import { getAccessToken } from '../../app/authStorage';
 import { useAuth } from '../../hooks/useAuth';
-import { colors } from '../theme/colors';
+import { useThemedColors } from '../theme/colors';
 
 export default function AppMainSidebar() {
+  const colors = useThemedColors();
   const user = useAuth();
   const history = useHistory();
   const [servers, setServers] = useState<any[]>([]);
@@ -72,7 +73,7 @@ export default function AppMainSidebar() {
       overflowY="hidden"
     >
       <Avatar height="45px" width="45px" src={logoSrc} name="Talkie" />
-      <Text marginTop="6px" color="white" fontSize="xs" fontWeight="bold">
+      <Text marginTop="6px" color={colors.white} fontSize="xs" fontWeight="bold">
         Talkie
       </Text>
       <Divider marginY="15px" width="30px" />
@@ -82,7 +83,8 @@ export default function AppMainSidebar() {
             key={server.id ?? `${server.name ?? 'server'}-${index}`}
             size="md"
             cursor="pointer"
-            backgroundColor="transparent"
+            backgroundColor={colors.primary}
+            color="white"
             src={server.icon || undefined}
             name={server.name}
             title={server.name}
@@ -99,9 +101,9 @@ export default function AppMainSidebar() {
             width="45px"
             height="45px"
             borderRadius="50%"
-            backgroundColor="whiteAlpha.200"
+            backgroundColor={colors.grayDark}
             _hover={{ backgroundColor: 'green.500', color: 'white', borderRadius: '30%' }}
-            color="green.500"
+            color={colors.primary}
             transition="all 0.2s"
             title="Create a Server"
           >

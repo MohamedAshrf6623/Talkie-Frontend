@@ -19,7 +19,7 @@ import {
   useToast,
 } from '@chakra-ui/react';
 import { BellIcon } from '@chakra-ui/icons';
-import { colors } from '../theme/colors';
+import { useThemedColors } from '../theme/colors';
 import { getNotificationsSocket } from '../../app/supabase';
 import {
   fetchNotifications,
@@ -43,6 +43,7 @@ export type AppNotificationCenterProps = {
 export default function AppNotificationCenter({
   onNotificationClick,
 }: AppNotificationCenterProps) {
+  const colors = useThemedColors();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -201,7 +202,7 @@ export default function AppNotificationCenter({
           _hover={{ backgroundColor: colors.darkLight }}
           title="Notifications"
         >
-          <BellIcon color="white" fontSize="18px" />
+          <BellIcon color={colors.white} fontSize="18px" />
           {hasUnread && (
             <Badge
               position="absolute"
@@ -232,7 +233,7 @@ export default function AppNotificationCenter({
         <PopoverHeader
           borderBottomWidth="1px"
           borderBottomColor={colors.darkLight}
-          color="white"
+          color={colors.white}
           fontWeight="bold"
           display="flex"
           justifyContent="space-between"
@@ -243,8 +244,8 @@ export default function AppNotificationCenter({
             <Button
               size="xs"
               variant="ghost"
-              color="whiteAlpha.700"
-              _hover={{ color: 'white' }}
+              color={colors.textDim}
+              _hover={{ color: colors.white }}
               onClick={markAllAsRead}
             >
               Mark all read
@@ -252,7 +253,7 @@ export default function AppNotificationCenter({
           )}
         </PopoverHeader>
 
-        <PopoverCloseButton color="white" />
+        <PopoverCloseButton color={colors.white} />
 
         <PopoverBody padding="0px" overflowY="auto" maxHeight="400px" flex="1">
           {isLoading ? (
@@ -261,7 +262,7 @@ export default function AppNotificationCenter({
               <Skeleton height="40px" borderRadius="md" />
               <Skeleton height="40px" borderRadius="md" />
               <Center>
-                <Spinner size="sm" color="white" />
+                <Spinner size="sm" color={colors.primary} />
               </Center>
             </VStack>
           ) : errorMessage ? (
@@ -275,7 +276,7 @@ export default function AppNotificationCenter({
             </Center>
           ) : notifications.length === 0 ? (
             <Center height="100px">
-              <Text color="whiteAlpha.600" fontSize="sm">
+              <Text color={colors.textMuted} fontSize="sm">
                 No notifications
               </Text>
             </Center>
@@ -307,18 +308,18 @@ export default function AppNotificationCenter({
                     <VStack align="start" spacing="4px" flex="1">
                       <HStack justify="space-between" width="100%">
                         <Text
-                          color="white"
+                          color={colors.white}
                           fontWeight={notification.isRead ? 'normal' : 'bold'}
                           fontSize="sm"
                           flex="1"
                         >
                           {notification.title}
                         </Text>
-                        <Text color="whiteAlpha.500" fontSize="xs">
+                        <Text color={colors.textMuted} fontSize="xs">
                           {formatTime(notification.created_at)}
                         </Text>
                       </HStack>
-                      <Text color="whiteAlpha.700" fontSize="xs">
+                      <Text color={colors.textDim} fontSize="xs">
                         {notification.content}
                       </Text>
                     </VStack>

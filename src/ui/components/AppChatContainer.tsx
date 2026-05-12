@@ -3,7 +3,7 @@ import { Box, Center, Link, Text } from '@chakra-ui/layout';
 import { useDisclosure } from '@chakra-ui/hooks';
 import AppChatInput from './AppChatInput';
 import AppThreadPanel from './AppThreadPanel';
-import { colors } from '../theme/colors';
+import { useThemedColors } from '../theme/colors';
 import { getChatSocket, getNotificationsSocket } from '../../app/supabase';
 import { Message } from '../../app/datamodels';
 import { Avatar } from '@chakra-ui/avatar';
@@ -38,6 +38,7 @@ export default function AppChatContainer({
   serverId,
   channelId,
 }: AppChatContainerProps) {
+  const colors = useThemedColors();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setLoading] = useState<boolean>(false);
   const [typingLabel, setTypingLabel] = useState<string>('');
@@ -82,15 +83,62 @@ export default function AppChatContainer({
   }, [channelId]);
 
   async function toggleReaction(messageId: string, emoji: string) {
+    if (!currentUser?.id) return;
+    
     const currentMessage = messages.find((message) => message.id === messageId);
     const hasReaction = (currentMessage?.reactions ?? []).some(
       (reaction) =>
-        reaction.emoji === emoji && reaction.userId === currentUser?.id,
+        reaction.emoji === emoji && reaction.userId === currentUser.id,
     );
 
     try {
       await toggleChatReaction(messageId, emoji, hasReaction);
-      // No manual fetch here! WebSocket will handle the state update.
+      setMessages((old) =>
+        old.map((item) => {
+          if (item.id !== messageId) {
+            return item;
+          }
+
+          const reactions = item.reactions ?? [];
+
+          if (hasReaction) {
+            return {
+              ...item,
+              reactions: reactions.filter(
+                (reaction) =>
+                  !(
+                    reaction.emoji === emoji &&
+                    reaction.userId === currentUser.id
+                  ),
+              ),
+            };
+          }
+
+          if (
+            reactions.some(
+              (reaction) =>
+                reaction.emoji === emoji && reaction.userId === currentUser.id,
+            )
+          ) {
+            return item;
+          }
+
+          return {
+            ...item,
+            reactions: [
+              ...reactions,
+              {
+                id: `${messageId}:${currentUser.id}:${emoji}`,
+                messageId,
+                userId: currentUser.id,
+                emoji,
+                created_at: new Date(),
+                updated_at: new Date(),
+              },
+            ],
+          };
+        }),
+      );
     } catch (error) {
       console.error('Failed to update reaction', error);
       toast({
@@ -254,17 +302,20 @@ export default function AppChatContainer({
         return;
       }
 
+      const userId = String(payload?.userId || '');
+      if (!userId) return;
+
       setMessages((old) =>
         old.map((item) => {
           if (item.id !== payload?.messageId) {
             return item;
           }
 
-          const nextReactionId = `${payload.messageId}:${payload.userId}:${payload.emoji}`;
+          const nextReactionId = `${payload.messageId}:${userId}:${payload.emoji}`;
           const hasExisting = (item.reactions ?? []).some(
             (reaction) =>
               reaction.emoji === payload.emoji &&
-              reaction.userId === payload.userId,
+              reaction.userId === userId,
           );
 
           if (hasExisting) {
@@ -278,10 +329,10 @@ export default function AppChatContainer({
               {
                 id: nextReactionId,
                 messageId: payload.messageId,
-                userId: payload.userId,
+                userId,
                 emoji: payload.emoji,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
+                created_at: new Date(),
+                updated_at: new Date(),
               },
             ],
           };
@@ -412,6 +463,18 @@ export default function AppChatContainer({
             setThreadRoot(msg);
             onThreadOpen();
           }}
+          onMessageDeleted={(messageId) => {
+            setMessages((old) => old.filter((item) => item.id !== messageId));
+
+            if (threadRoot?.id === messageId) {
+              setThreadRoot(null);
+              onThreadClose();
+            }
+
+            if (replyTarget?.id === messageId) {
+              setReplyTarget(null);
+            }
+          }}
           onMessageUpdated={() => {
             void fetchMessages();
           }}
@@ -442,13 +505,13 @@ export default function AppChatContainer({
         {/* Messages */}
         {isLoading ? (
           <Center height="100%">
-            <Spinner size="xl" color="white" />
+            <Spinner size="xl" color={colors.primary} />
           </Center>
         ) : hasMessages ? (
           <MessageList />
         ) : (
           <Center height="100vh">
-            <Text color="white">No messages</Text>
+            <Text color={colors.white}>No messages</Text>
           </Center>
         )}
       </Box>
@@ -461,7 +524,7 @@ export default function AppChatContainer({
           alignItems="center"
           paddingX="15px"
         >
-          <Text color="whiteAlpha.700" fontSize="sm" fontStyle="italic">
+          <Text color={colors.textDim} fontSize="sm" fontStyle="italic">
             {typingLabel}
           </Text>
         </Box>
@@ -473,9 +536,21 @@ export default function AppChatContainer({
         channelId={channelId}
         replyTarget={replyTarget}
         onClearReplyTarget={() => setReplyTarget(null)}
-        onMessageSent={() => {
-          // No fetch needed here, socket handles real-time updates.
-          // Just scroll to bottom.
+        onMessageSent={(sentMessage) => {
+          if (!sentMessage) {
+            return;
+          }
+
+          setMessages((old) => {
+            if (old.some((item) => item.id === sentMessage.id)) {
+              return old.map((item) =>
+                item.id === sentMessage.id ? sentMessage : item,
+              );
+            }
+
+            return [sentMessage, ...old];
+          });
+
           scrollToBottom();
         }}
       />
@@ -500,6 +575,7 @@ type AppMessageContainerProps = {
   onToggleReaction: (messageId: string, emoji: string) => Promise<void>;
   onReply: (message: Message) => void;
   onOpenThread: (message: Message) => void;
+  onMessageDeleted: (messageId: string) => void;
   onMessageUpdated: VoidFunction;
 };
 
@@ -509,8 +585,10 @@ function AppMessageContainer({
   onToggleReaction,
   onReply,
   onOpenThread,
+  onMessageDeleted,
   onMessageUpdated,
 }: AppMessageContainerProps) {
+  const colors = useThemedColors();
   const canEditOwnMessage = canEditMessage(currentUserId, message.sent_by);
   const canDeleteOwnMessage = canDeleteMessage(currentUserId, message.sent_by);
   const canDeleteForEveryone = canDeleteMessageForEveryone(
@@ -562,19 +640,21 @@ function AppMessageContainer({
 
   async function deleteMessage() {
     try {
+      onMessageDeleted(message.id!);
       await deleteChatMessage(message.id!);
-      onMessageUpdated();
     } catch (error) {
       console.error('Failed to delete message', error);
+      void onMessageUpdated();
     }
   }
 
   async function deleteForEveryone() {
     try {
+      onMessageDeleted(message.id!);
       await deleteChatMessageForEveryone(message.id!);
-      onMessageUpdated();
     } catch (error) {
       console.error('Failed to delete message for everyone', error);
+      void onMessageUpdated();
     }
   }
 
@@ -604,11 +684,11 @@ function AppMessageContainer({
         />
         <Box flex="1">
           <Box justifyContent="start" alignItems="end" display="flex">
-            <Text color="white" fontSize="xs" fontWeight="bold">
+            <Text color={colors.white} fontSize="xs" fontWeight="bold">
               <Link>{message.app_users?.name}</Link>
             </Text>
             <Box width="10px" />
-            <Text fontSize="12px" color="whiteAlpha.500">
+            <Text fontSize="12px" color={colors.textMuted}>
               {date}
             </Text>
           </Box>
@@ -661,11 +741,11 @@ function AppMessageContainer({
           ) : (
             <Box>
               {message.parentMessageId ? (
-                <Text fontSize="xs" color="whiteAlpha.600" marginBottom="4px">
+                <Text fontSize="xs" color={colors.textDim} marginBottom="4px">
                   Replying in thread
                 </Text>
               ) : null}
-              <Text fontSize="sm" color="white">
+              <Text fontSize="sm" color={colors.white}>
                 {message.text}
               </Text>
             </Box>

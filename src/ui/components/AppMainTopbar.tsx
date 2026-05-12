@@ -2,9 +2,13 @@ import { IconButton } from '@chakra-ui/button';
 import {
   AtSignIcon,
   BellIcon,
+  EmailIcon,
+  MoonIcon,
+  NotAllowedIcon,
+  SearchIcon,
   QuestionIcon,
   StarIcon,
-  TimeIcon,
+  SunIcon,
 } from '@chakra-ui/icons';
 import { Input } from '@chakra-ui/input';
 import {
@@ -18,12 +22,13 @@ import {
   ModalHeader,
   ModalOverlay,
   Text,
+  useColorMode,
   useDisclosure,
   useToast,
 } from '@chakra-ui/react';
 import React, { useState } from 'react';
 import { useHistory, useParams } from 'react-router';
-import { colors } from '../theme/colors';
+import { useThemedColors } from '../theme/colors';
 import AppIconButton from './AppIconButton';
 import AppNotificationCenter from './AppNotificationCenter';
 import { searchMessages } from '../../app/services/message.service';
@@ -41,11 +46,18 @@ type SearchResult = {
 };
 
 export default function AppMainTopbar() {
+  const colors = useThemedColors();
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const {
+    isOpen: isHelpOpen,
+    onOpen: onHelpOpen,
+    onClose: onHelpClose,
+  } = useDisclosure();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchTotal, setSearchTotal] = useState<number | null>(null);
+  const { colorMode, toggleColorMode } = useColorMode();
   const history = useHistory();
   const toast = useToast();
   const params = useParams<{ serverId?: string; channelId?: string }>();
@@ -117,7 +129,7 @@ export default function AppMainTopbar() {
           <AppIconButton
             tooltip="Mute a channel"
             ariaLabel="Mute channel"
-            icon={<BellIcon />}
+            icon={<NotAllowedIcon />}
           ></AppIconButton>
           <AppIconButton
             tooltip="Pinned Messages"
@@ -131,7 +143,8 @@ export default function AppMainTopbar() {
           ></AppIconButton>
           <Input
             placeholder="Search messages"
-            color="white"
+            color={colors.white}
+            _placeholder={{ color: colors.textMuted }}
             width="150px"
             size="sm"
             borderRadius="md"
@@ -151,25 +164,32 @@ export default function AppMainTopbar() {
           <AppIconButton
             tooltip="Search messages"
             ariaLabel="Search messages"
-            icon={<TimeIcon />}
+            icon={<SearchIcon />}
             onClick={() => void runSearch()}
           ></AppIconButton>
           <AppIconButton
             tooltip="Inbox"
             ariaLabel="See inbox"
-            icon={<TimeIcon />}
+            icon={<EmailIcon />}
           ></AppIconButton>
           <AppIconButton
             tooltip="Help"
-            ariaLabel="Toggle Memberlist"
+            ariaLabel="Open help"
             icon={<QuestionIcon />}
+            onClick={onHelpOpen}
+          ></AppIconButton>
+          <AppIconButton
+            tooltip={colorMode === 'dark' ? 'Light mode' : 'Dark mode'}
+            ariaLabel="Toggle theme"
+            icon={colorMode === 'dark' ? <SunIcon /> : <MoonIcon />}
+            onClick={toggleColorMode}
           ></AppIconButton>
         </Box>
       </Box>
 
       <Modal isOpen={isOpen} onClose={onClose} size="lg" isCentered>
         <ModalOverlay />
-        <ModalContent backgroundColor={colors.grayLight} color="white">
+        <ModalContent backgroundColor={colors.grayLight} color={colors.dark}>
           <ModalHeader>
             Search results {searchTotal !== null ? `(${searchTotal})` : ''}
           </ModalHeader>
@@ -217,22 +237,47 @@ export default function AppMainTopbar() {
           </ModalBody>
         </ModalContent>
       </Modal>
+
+      <Modal isOpen={isHelpOpen} onClose={onHelpClose} size="md" isCentered>
+        <ModalOverlay />
+        <ModalContent backgroundColor={colors.grayLight} color={colors.dark}>
+          <ModalHeader>Help</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody paddingBottom="20px">
+            <Box display="grid" gap="10px">
+              <Text fontSize="sm" color="gray.300">
+                Search messages by typing a keyword and pressing Enter or the
+                search button.
+              </Text>
+              <Text fontSize="sm" color="gray.300">
+                Use the notification bell to review unread activity in real
+                time.
+              </Text>
+              <Text fontSize="sm" color="gray.300">
+                Mute, inbox, and pinned message actions will be connected here
+                when their handlers are added.
+              </Text>
+            </Box>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
     </>
   );
 }
 
 function AppMainTopbarChannelName() {
+  const colors = useThemedColors();
   return (
     <Box display="flex" alignItems="center" cursor="default">
       <Text
         marginRight="10px"
         fontStyle="italic"
-        color="gray.500"
+        color={colors.lightGray}
         fontSize="xl"
       >
         #
       </Text>
-      <Text color="white">
+      <Text color={colors.white}>
         💬-general (Server is hosted on Singapore region)
       </Text>
     </Box>

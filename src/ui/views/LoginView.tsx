@@ -5,6 +5,7 @@ import {
   FormControl,
   FormLabel,
   Heading,
+  Image,
   Input,
   Text,
   useToast,
@@ -21,7 +22,7 @@ import {
   verifyTfa,
 } from '../../app/services/auth-api.service';
 import { resolveDefaultRedirectRoute } from '../../routes/defaultRoute';
-import { colors } from '../theme/colors';
+import { useThemedColors } from '../theme/colors';
 
 function decodeJwtPayload(token: string) {
   const payloadPart = token.split('.')[1];
@@ -40,6 +41,7 @@ function decodeJwtPayload(token: string) {
 }
 
 export default function LoginView() {
+  const colors = useThemedColors();
   const toast = useToast();
   const location = useLocation();
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>(() => {
@@ -308,7 +310,7 @@ export default function LoginView() {
       display="flex"
       alignItems="center"
       justifyContent="center"
-      backgroundColor="#1f2127"
+      backgroundColor={colors.grayDarkest}
       padding="24px"
     >
       <Box
@@ -317,15 +319,25 @@ export default function LoginView() {
         backgroundColor={colors.grayMedium}
         borderRadius="12px"
         padding="28px"
-        color="white"
+        color={colors.white}
         boxShadow="xl"
       >
-        <Heading size="lg" marginBottom="6px">
-          Talkie
-        </Heading>
-        <Text color="whiteAlpha.700" fontSize="sm" marginBottom="20px">
-          {authMode === 'signin' ? 'Sign in to continue' : 'Create an account'}
-        </Text>
+        <Box display="flex" flexDirection="column" alignItems="center" marginBottom="14px">
+          <Image
+            src="/talkie-logo.png"
+            alt="Talkie logo"
+            boxSize="72px"
+            borderRadius="18px"
+            objectFit="cover"
+            marginBottom="10px"
+          />
+          <Heading size="lg" marginBottom="6px">
+            Talkie
+          </Heading>
+          <Text color={colors.textDim} fontSize="sm" textAlign="center">
+            {authMode === 'signin' ? 'Sign in to continue' : 'Create an account'}
+          </Text>
+        </Box>
 
         <ButtonGroup size="sm" marginBottom="20px" isAttached variant="outline">
           <Button

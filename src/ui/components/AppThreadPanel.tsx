@@ -13,16 +13,18 @@ import {
   ModalBody,
 } from '@chakra-ui/react';
 import { Avatar } from '@chakra-ui/avatar';
-import { colors } from '../theme/colors';
+import { useThemedColors } from '../theme/colors';
 import { Message, AppUser } from '../../app/datamodels';
 import AppChatInput from './AppChatInput';
 import { useAuth } from '../../hooks/useAuth';
+import { getChatSocket } from '../../app/supabase';
 import {
   fetchThreadMessages,
   toggleMessageReaction as toggleThreadReaction,
   normalizeMessage,
 } from '../../app/services/message.service';
 import { normalizeBlobUrl } from '../../app/services/api.service';
+import { useSocketEvent } from '../../hooks/useSocketEvent';
 
 const REACTION_EMOJIS = ['👍', '❤️', '😂', '🎉'];
 
@@ -43,9 +45,48 @@ export default function AppThreadPanel({
   channelId,
   onMessageSent,
 }: AppThreadPanelProps) {
+  const colors = useThemedColors();
   const [threadMessages, setThreadMessages] = useState<Message[]>([]);
   const [isLoading, setLoading] = useState(false);
   const currentUser = useAuth();
+
+  useSocketEvent<any>(
+    getChatSocket,
+    'message:deleted',
+    (payload) => {
+      const payloadChannelId = payload?.channelId ?? payload?.channel_id;
+      if (payloadChannelId && payloadChannelId !== channelId) {
+        return;
+      }
+
+      if (payload?.id === rootMessage?.id) {
+        onClose();
+        return;
+      }
+
+      setThreadMessages((old) => old.filter((item) => item.id !== payload?.id));
+    },
+    [channelId, rootMessage?.id, onClose],
+  );
+
+  useSocketEvent<any>(
+    getChatSocket,
+    'message:deletedForEveryone',
+    (payload) => {
+      const payloadChannelId = payload?.channelId ?? payload?.channel_id;
+      if (payloadChannelId && payloadChannelId !== channelId) {
+        return;
+      }
+
+      if (payload?.id === rootMessage?.id) {
+        onClose();
+        return;
+      }
+
+      setThreadMessages((old) => old.filter((item) => item.id !== payload?.id));
+    },
+    [channelId, rootMessage?.id, onClose],
+  );
 
   useEffect(() => {
     if (!isOpen || !rootMessage?.id) {
@@ -103,13 +144,13 @@ export default function AppThreadPanel({
         flexDirection="column"
       >
         <ModalHeader
-          color="white"
+          color={colors.white}
           borderBottomWidth="1px"
           borderBottomColor={colors.darkLight}
         >
           Thread
         </ModalHeader>
-        <ModalCloseButton color="white" />
+        <ModalCloseButton color={colors.white} />
         <ModalBody
           flex="1"
           overflowY="auto"
@@ -119,7 +160,7 @@ export default function AppThreadPanel({
         >
           {isLoading ? (
             <Center height="100%" paddingY="20px">
-              <Spinner size="lg" color="white" />
+              <Spinner size="lg" color={colors.primary} />
             </Center>
           ) : (
             <>
@@ -139,7 +180,7 @@ export default function AppThreadPanel({
 
               {threadMessages.length === 0 ? (
                 <Center paddingY="20px">
-                  <Text color="whiteAlpha.600">No replies yet</Text>
+                  <Text color={colors.textMuted}>No replies yet</Text>
                 </Center>
               ) : (
                 threadMessages.map((msg) => (
@@ -189,6 +230,7 @@ function ThreadMessageItem({
   isRoot = false,
   onToggleReaction,
 }: ThreadMessageItemProps) {
+  const colors = useThemedColors();
   const [isHovering, setIsHovering] = useState(false);
 
   const reactionGroups = (message.reactions ?? []).reduce(
@@ -239,20 +281,20 @@ function ThreadMessageItem({
       />
       <Box flex="1">
         <Box justifyContent="start" alignItems="end" display="flex">
-          <Text color="white" fontSize="xs" fontWeight="bold">
+          <Text color={colors.white} fontSize="xs" fontWeight="bold">
             <Link>{message.app_users?.name}</Link>
           </Text>
           <Box width="10px" />
-          <Text fontSize="11px" color="whiteAlpha.500">
+          <Text fontSize="11px" color={colors.textMuted}>
             {date}
           </Text>
           {isRoot && (
-            <Text fontSize="11px" color="whiteAlpha.600" marginLeft="8px">
+            <Text fontSize="11px" color={colors.textDim} marginLeft="8px">
               (Original)
             </Text>
           )}
         </Box>
-        <Text fontSize="sm" color="white" marginTop="4px">
+        <Text fontSize="sm" color={colors.white} marginTop="4px">
           {message.text}
         </Text>
 

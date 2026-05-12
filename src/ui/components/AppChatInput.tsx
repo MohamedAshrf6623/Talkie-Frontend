@@ -9,7 +9,7 @@ import {
 } from '@chakra-ui/icons';
 import { Input } from '@chakra-ui/input';
 import AppIconButton from './AppIconButton';
-import { colors } from '../theme/colors';
+import { useThemedColors } from '../theme/colors';
 import { getChatSocket } from '../../app/supabase';
 import { Message } from '../../app/datamodels';
 import { useAuth } from '../../hooks/useAuth';
@@ -37,7 +37,7 @@ export type AppChatInputProps = {
   channelId: string;
   replyTarget?: Message | null;
   onClearReplyTarget?: VoidFunction;
-  onMessageSent?: VoidFunction;
+  onMessageSent?: (message: Message) => void;
 };
 
 export default function AppChatInput({
@@ -48,6 +48,7 @@ export default function AppChatInput({
   onClearReplyTarget,
   onMessageSent,
 }: AppChatInputProps) {
+  const colors = useThemedColors();
   const [message, setMessage] = useState<string>('');
   const [isLoading, setLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -117,8 +118,8 @@ export default function AppChatInput({
       setMessage('');
       setUploadedAttachments([]);
       onClearReplyTarget?.();
+      onMessageSent?.(sentMessage);
       scrollToBottom();
-      onMessageSent?.();
       return sentMessage;
     } catch (error) {
       console.error('Error sending message:', error);
@@ -196,15 +197,16 @@ export default function AppChatInput({
   return (
     <Box paddingX="15px" backgroundColor={colors.grayLight}>
       {replyTarget ? (
-        <Box marginBottom="6px" color="whiteAlpha.800" fontSize="sm">
+        <Box marginBottom="6px" color={colors.textDim} fontSize="sm">
           Replying to {replyTarget.app_users?.name ?? 'message'}
           <button
             onClick={onClearReplyTarget}
             style={{
               marginLeft: '8px',
-              color: '#a0aec0',
+              color: colors.lightGray,
               background: 'none',
               border: 'none',
+              cursor: 'pointer',
             }}
           >
             Clear
@@ -237,10 +239,11 @@ export default function AppChatInput({
         <Input
           height="35px"
           backgroundColor="transparent"
-          color="white"
+          color={colors.white}
           value={message}
           borderColor="transparent"
           placeholder="Message"
+          _placeholder={{ color: colors.textMuted }}
           onInput={onInput}
           onKeyPress={onKeyPress}
           disabled={isLoading}
@@ -260,7 +263,7 @@ export default function AppChatInput({
         <AppIconButton ariaLabel="Select emoji" icon={<AtSignIcon />} />
       </Box>
       {uploadedAttachments?.length ? (
-        <Box marginTop="8px" color="white" fontSize="sm">
+        <Box marginTop="8px" color={colors.white} fontSize="sm">
           <Text fontWeight="bold" marginBottom="4px">
             Attached files
           </Text>

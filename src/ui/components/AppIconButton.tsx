@@ -1,6 +1,7 @@
 import React from "react";
 import { IconButton } from "@chakra-ui/button";
 import { Tooltip } from "@chakra-ui/tooltip";
+import { useThemedColors } from "../theme/colors";
 
 export type AppIconButtonProps = {
   ariaLabel: string;
@@ -23,6 +24,7 @@ export default function AppIconButton({
   disabled,
   ...rest
 }: AppIconButtonProps) {
+  const colors = useThemedColors();
   return (
     <Tooltip label={tooltip}>
       <IconButton
@@ -33,8 +35,8 @@ export default function AppIconButton({
         marginX="1px"
         size={size}
         isDisabled={disabled}
-        backgroundColor={!withBackground ? "transparent" : ""}
-        color={!withBackground ? "white" : ""}
+        backgroundColor={!withBackground ? "transparent" : colors.darkLight}
+        color={colors.white}
         {...rest}
         _active={
           !withBackground
