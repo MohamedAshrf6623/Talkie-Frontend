@@ -49,6 +49,7 @@ export async function requestPasswordReset(email: string) {
 
 export async function resetPassword(payload: {
   newPassword: string;
+  newPasswordConfirm: string;
   resetToken: string;
 }) {
   return requestJson('/auth/reset-passwrod', {

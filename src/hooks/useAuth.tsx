@@ -1,11 +1,20 @@
-import { User } from '@supabase/gotrue-js';
 import React, { useEffect, useState } from 'react';
 import { getAccessToken } from '../app/authStorage';
 import { supabase } from '../app/supabase';
 import { fetchCurrentUser } from '../app/services/user.service';
 
-export function useAuth(): User | null {
-  const [user, setUser] = useState<User | null>(null);
+/** Matches the subset of user fields stored in localStorage by login/OAuth flows. */
+export type TalkieUser = {
+  id?: string;
+  email?: string;
+  name?: string;
+  username?: string;
+  avatar?: string | null;
+  appRole?: string;
+};
+
+export function useAuth(): TalkieUser | null {
+  const [user, setUser] = useState<TalkieUser | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -25,11 +34,14 @@ export function useAuth(): User | null {
               .join(' ')
               .trim();
 
-            const normalizedUser = {
+            const normalizedUser: TalkieUser = {
               id: me.id,
               email: me.email ?? '',
               name:
-                me.name || fullName || me.username || (me.email ?? 'User').split('@')[0],
+                me.name ||
+                fullName ||
+                me.username ||
+                (me.email ?? 'User').split('@')[0],
               username: me.username ?? '',
               appRole: me.appRole ?? 'user',
               avatar: me.avatar ?? null,
@@ -43,7 +55,7 @@ export function useAuth(): User | null {
       }
 
       if (isMounted) {
-        setUser(supabase.auth.user());
+        setUser(supabase.auth.user() as TalkieUser | null);
       }
     }
 

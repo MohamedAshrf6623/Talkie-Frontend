@@ -8,6 +8,7 @@ import {
 } from '../../app/services/server.service';
 import { useAuth } from '../../hooks/useAuth';
 import { Text } from '@chakra-ui/react';
+import { getAccessToken } from '../../app/authStorage';
 
 export default function AppCategoryList() {
   const user = useAuth();
@@ -22,6 +23,14 @@ export default function AppCategoryList() {
       try {
         setIsLoading(true);
         setErrorMessage('');
+
+        if (!user?.id && !getAccessToken()) {
+          const discovered = await discoverPublicServers({ limit: 20 });
+          if (isMounted) {
+            setServers(Array.isArray(discovered) ? discovered : []);
+          }
+          return;
+        }
 
         const data = user?.id
           ? await fetchMyServers(user.id)

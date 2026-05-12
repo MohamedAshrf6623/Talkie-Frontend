@@ -20,6 +20,33 @@ export type SendMessageInput = {
 
 type ApiMessage = Record<string, any>;
 
+function getStoredUser() {
+  try {
+    const value = localStorage.getItem('user');
+    return value ? JSON.parse(value) : null;
+  } catch {
+    return null;
+  }
+}
+
+function buildDisplayUser(authorId?: string | null) {
+  const storedUser = getStoredUser();
+  if (storedUser?.id && authorId && storedUser.id === authorId) {
+    return storedUser;
+  }
+
+  if (!authorId) {
+    return null;
+  }
+
+  return {
+    id: authorId,
+    email: '',
+    name: `User ${authorId.slice(0, 8)}`,
+    avatar: null,
+  };
+}
+
 function normalizeAttachment(attachment: Record<string, any>) {
   return {
     ...attachment,
@@ -44,7 +71,7 @@ export function normalizeMessage(record: ApiMessage): Message {
     channel_id: record.channel_id ?? record.channelId,
     text: record.text ?? record.content ?? '',
     sent_by: authorId,
-    app_users: record.app_users ?? record.user ?? null,
+    app_users: record.app_users ?? record.user ?? buildDisplayUser(authorId),
     created_at:
       record.created_at ?? record.createdAt ?? new Date().toISOString(),
     updated_at:
@@ -113,7 +140,7 @@ export async function deleteMessageForEveryone(messageId: string) {
 export async function editMessage(messageId: string, text: string) {
   return requestJson(`/messages/${messageId}`, {
     method: 'PATCH',
-    body: { text },
+    body: { content: text },
   });
 }
 

@@ -1,9 +1,12 @@
 import { requestJson } from './api.service';
 
 export type InvitationPayload = {
-  inviteCode: string;
+  inviteCode?: string;
   serverId?: string;
   inviterId?: string;
+  icon?: string;
+  name?: string;
+  memberCount?: number;
   expiresAt?: string | null;
 };
 

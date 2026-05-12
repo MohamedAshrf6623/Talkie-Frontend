@@ -3,7 +3,11 @@
 // (`supabase.auth.user()`, `supabase.auth.signOut()`, and `supabase.from(...).insert/then`).
 
 import { io, Socket } from 'socket.io-client';
-import { API_URL, normalizeBlobUrl } from './services/api.service';
+import {
+  API_URL,
+  normalizeBlobUrl,
+  unwrapApiPayload,
+} from './services/api.service';
 
 type StoredUser = {
   id?: string;
@@ -183,11 +187,17 @@ function buildHeaders(extraHeaders: Record<string, string> = {}) {
   return headers;
 }
 
-function handleJsonResponse(res: Response) {
+async function handleJsonResponse(res: Response) {
+  const payload = await res.json().catch(() => ({}));
+  const data = unwrapApiPayload<any>(payload);
+
   if (!res.ok) {
-    return res.json().catch(() => ({ error: res.statusText }));
+    const message =
+      payload?.message || payload?.error || res.statusText || 'Request failed';
+    throw new Error(message);
   }
-  return res.json().catch(() => ({}));
+
+  return data;
 }
 
 function normalizeDate(value: unknown): string {
@@ -540,6 +550,7 @@ export const supabase = {
       try {
         await fetch(`${API_URL}/auth/logout`, {
           method: 'POST',
+          headers: buildHeaders(),
           credentials: 'include',
         });
       } catch (e) {
@@ -561,7 +572,9 @@ export const supabase = {
           return null;
         }
 
-        const data = await response.json().catch(() => ({}));
+        const data = unwrapApiPayload<{ access_token?: string }>(
+          await response.json().catch(() => ({})),
+        );
 
         if (data?.access_token) {
           localStorage.setItem('access_token', data.access_token);

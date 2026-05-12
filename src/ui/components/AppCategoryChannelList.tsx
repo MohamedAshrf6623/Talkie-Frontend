@@ -50,18 +50,10 @@ export default function AppCategoryChannelList({
     };
   }, [server, user?.id]);
 
-  const displayChannels = channels.length > 0 ? channels : [
-    { id: 'ch-1', name: 'general', icon: '💬' },
-    { id: 'ch-2', name: 'announcement', icon: '🎙️' },
-    { id: 'ch-3', name: 'tasks', icon: '🔵' },
-    { id: 'ch-4', name: 'guide', icon: '🧰' },
-    { id: 'ch-5', name: 'help', icon: '🤯' },
-  ];
-
-  const serverName = server?.name || '🛫 Main';
+  const serverName = server?.name || 'Main';
 
   const handleChannelClick = (channelId: string) => {
-    if (server?.id) {
+    if (server?.id && channelId) {
       history.push(`/servers/${server.id}/channels/${channelId}`);
     }
   };
@@ -76,14 +68,20 @@ export default function AppCategoryChannelList({
           {errorMessage}
         </Text>
       ) : null}
-      {displayChannels.map((channel, idx) => (
-        <AppChannelListItem
-          key={channel.id || idx}
-          label={`${channel.icon || '💬'}-${channel.name || `channel-${idx}`}`}
-          active={idx === 0}
-          onClick={() => handleChannelClick(channel.id)}
-        />
-      ))}
+      {channels.length ? (
+        channels.map((channel, idx) => (
+          <AppChannelListItem
+            key={channel.id || idx}
+            label={`${channel.icon || '#'}-${channel.name || `channel-${idx}`}`}
+            active={idx === 0}
+            onClick={() => handleChannelClick(channel.id)}
+          />
+        ))
+      ) : (
+        <Text color="whiteAlpha.500" fontSize="xs" paddingLeft="20px">
+          No channels
+        </Text>
+      )}
     </Box>
   );
 }

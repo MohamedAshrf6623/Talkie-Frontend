@@ -149,7 +149,7 @@ export default function AppChatInput({
   }
 
   function onKeyPress({ key }: any) {
-    if (!message) {
+    if (!message && !uploadedAttachments?.length) {
       return;
     }
 

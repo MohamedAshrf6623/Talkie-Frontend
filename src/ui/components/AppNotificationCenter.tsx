@@ -77,7 +77,36 @@ export default function AppNotificationCenter({
         title: payload.title || 'New Notification',
         content: payload.content || payload.message || '',
         isRead: false,
-        created_at: new Date().toISOString(),
+        created_at: payload.created_at || payload.createdAt || new Date().toISOString(),
+        link: payload.link,
+      };
+
+      setNotifications((prev) => {
+        const exists = prev.some((item) => item.id === newNotification.id);
+        if (exists) {
+          return prev.map((item) =>
+            item.id === newNotification.id
+              ? { ...item, ...newNotification }
+              : item,
+          );
+        }
+
+        return [newNotification, ...prev];
+      });
+    },
+    [],
+  );
+
+  useSocketEvent<any>(
+    getNotificationsSocket,
+    'notification:received',
+    (payload) => {
+      const newNotification: Notification = {
+        id: payload.id || `notif-${Date.now()}`,
+        title: payload.title || 'New Notification',
+        content: payload.content || payload.message || '',
+        isRead: false,
+        created_at: payload.created_at || payload.createdAt || new Date().toISOString(),
         link: payload.link,
       };
 

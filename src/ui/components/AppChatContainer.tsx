@@ -167,7 +167,10 @@ export default function AppChatContainer({
         }));
       }
 
-      notifyNewMessage(payload);
+      notifyNewMessage({
+        ...payload,
+        text: payload?.text ?? payload?.content,
+      });
       setMessages((old) => {
         if (old.some((item) => item.id === newMessage.id)) {
           return old.map((item) =>
@@ -319,7 +322,7 @@ export default function AppChatContainer({
 
       try {
         const channel = await getChannel(channelId);
-        if (channel?.type === 'dm') {
+        if (String(channel?.type).toUpperCase() === 'DM') {
           roomType = 'dm';
           socket.emit('dm:join', { channelId });
         } else {

@@ -1,28 +1,60 @@
 import { Avatar } from '@chakra-ui/avatar';
 import { Box, Divider, Text, VStack } from '@chakra-ui/layout';
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../../app/supabase';
+import {
+  discoverPublicServers,
+  fetchMyServers,
+  fetchServers,
+} from '../../app/services/server.service';
+import { getAccessToken } from '../../app/authStorage';
+import { useAuth } from '../../hooks/useAuth';
 import { colors } from '../theme/colors';
 
 export default function AppMainSidebar() {
+  const user = useAuth();
   const [servers, setServers] = useState<any[]>([]);
   const logoSrc = '/talkie-logo.png';
 
   useEffect(() => {
     let isMounted = true;
 
-    supabase.from('servers').then((res: any) => {
-      if (!isMounted) {
-        return;
-      }
+    async function loadServers() {
+      try {
+        if (user?.id) {
+          const mine = await fetchMyServers(user.id);
+          const list =
+            Array.isArray(mine) && mine.length > 0 ? mine : await fetchServers();
+          if (isMounted) {
+            setServers(Array.isArray(list) ? list : []);
+          }
+          return;
+        }
 
-      setServers(Array.isArray(res?.data) ? res.data : []);
-    });
+        if (getAccessToken()) {
+          const list = await fetchServers();
+          if (isMounted) {
+            setServers(Array.isArray(list) ? list : []);
+          }
+          return;
+        }
+
+        const discovered = await discoverPublicServers({ limit: 20 });
+        if (isMounted) {
+          setServers(Array.isArray(discovered) ? discovered : []);
+        }
+      } catch {
+        if (isMounted) {
+          setServers([]);
+        }
+      }
+    }
+
+    void loadServers();
 
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [user?.id]);
 
   return (
     <Box

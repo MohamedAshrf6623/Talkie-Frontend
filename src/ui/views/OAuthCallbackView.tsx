@@ -1,10 +1,22 @@
 import React, { useEffect } from 'react';
 import { Box, Spinner, Text } from '@chakra-ui/react';
+import { resolveDefaultRedirectRoute } from '../../routes/defaultRoute';
 
-const DEFAULT_REDIRECT_ROUTE =
-  '/servers/a246a23f-c43b-446d-a1ba-7219c53b94c6/channels/4caf111f-ed31-4e81-8735-f92d5860c878';
-const OTHER_REDIRECT_ROUTE =
-  '/servers/98382d04-9d6d-4b98-9dd8-9c980a4e5b0c/channels/cd9d9bbb-4202-4aa1-88ec-21c17d809301';
+function decodeJwtPayload(token: string) {
+  const payloadPart = token.split('.')[1];
+  if (!payloadPart) {
+    return null;
+  }
+
+  const normalized = payloadPart.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+
+  try {
+    return JSON.parse(atob(padded));
+  } catch {
+    return null;
+  }
+}
 
 export default function OAuthCallbackView() {
   useEffect(() => {
@@ -13,21 +25,42 @@ export default function OAuthCallbackView() {
     const tfaRequired = params.get('tfaRequired');
     const tfaLoginToken = params.get('tfaLoginToken');
 
-    if (token) {
-      localStorage.setItem('access_token', token);
-      localStorage.removeItem('token');
-      localStorage.removeItem('pending_tfa_login_token');
-      window.location.replace(DEFAULT_REDIRECT_ROUTE);
-      return;
+    async function completeOAuth() {
+      if (token) {
+        localStorage.setItem('access_token', token);
+        localStorage.removeItem('token');
+        localStorage.removeItem('pending_tfa_login_token');
+        const payload = decodeJwtPayload(token) as {
+          sub?: string;
+          email?: string;
+        } | null;
+
+        if (payload?.sub) {
+          localStorage.setItem(
+            'user',
+            JSON.stringify({
+              id: payload.sub,
+              email: payload.email ?? '',
+              name: (payload.email ?? 'User').split('@')[0],
+              avatar: null,
+            }),
+          );
+        }
+
+        window.location.replace(await resolveDefaultRedirectRoute());
+        return;
+      }
+
+      if (tfaRequired === '1' && tfaLoginToken) {
+        localStorage.setItem('pending_tfa_login_token', tfaLoginToken);
+        window.location.replace(await resolveDefaultRedirectRoute());
+        return;
+      }
+
+      window.location.replace('/login');
     }
 
-    if (tfaRequired === '1' && tfaLoginToken) {
-      localStorage.setItem('pending_tfa_login_token', tfaLoginToken);
-      window.location.replace(DEFAULT_REDIRECT_ROUTE);
-      return;
-    }
-
-    window.location.replace(OTHER_REDIRECT_ROUTE);
+    void completeOAuth();
   }, []);
 
   return (

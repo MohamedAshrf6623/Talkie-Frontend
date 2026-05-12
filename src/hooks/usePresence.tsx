@@ -3,7 +3,7 @@ import { getChatSocket } from '../app/supabase';
 
 export type UserPresence = {
   userId: string;
-  status: 'online' | 'idle' | 'offline';
+  status: 'online' | 'idle' | 'dnd' | 'offline';
   lastSeen?: string;
 };
 
@@ -40,6 +40,7 @@ export function useUserPresence(userId: string | undefined) {
           status: (payload.status || 'offline') as
             | 'online'
             | 'idle'
+            | 'dnd'
             | 'offline',
           lastSeen: payload.lastSeen || new Date().toISOString(),
         };
@@ -48,9 +49,11 @@ export function useUserPresence(userId: string | undefined) {
       }
     };
 
+    socket.on('presence:update', handlePresenceUpdate);
     socket.on('presence:updated', handlePresenceUpdate);
 
     return () => {
+      socket.off('presence:update', handlePresenceUpdate);
       socket.off('presence:updated', handlePresenceUpdate);
     };
   }, [userId]);
@@ -77,6 +80,7 @@ export function useAllPresence() {
           status: (payload.status || 'offline') as
             | 'online'
             | 'idle'
+            | 'dnd'
             | 'offline',
           lastSeen: payload.lastSeen || new Date().toISOString(),
         },
@@ -92,9 +96,11 @@ export function useAllPresence() {
       }
     };
 
+    socket.on('presence:update', handlePresenceUpdate);
     socket.on('presence:updated', handlePresenceUpdate);
 
     return () => {
+      socket.off('presence:update', handlePresenceUpdate);
       socket.off('presence:updated', handlePresenceUpdate);
     };
   }, []);
@@ -103,26 +109,30 @@ export function useAllPresence() {
 }
 
 export function getPresenceColor(
-  status: 'online' | 'idle' | 'offline',
+  status: 'online' | 'idle' | 'dnd' | 'offline',
 ): string {
   switch (status) {
     case 'online':
       return '#43b581';
     case 'idle':
       return '#faa61a';
+    case 'dnd':
+      return '#f04747';
     case 'offline':
       return '#747f8d';
   }
 }
 
 export function getPresenceLabel(
-  status: 'online' | 'idle' | 'offline',
+  status: 'online' | 'idle' | 'dnd' | 'offline',
 ): string {
   switch (status) {
     case 'online':
       return 'Online';
     case 'idle':
       return 'Idle';
+    case 'dnd':
+      return 'Do Not Disturb';
     case 'offline':
       return 'Offline';
   }

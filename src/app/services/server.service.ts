@@ -31,9 +31,7 @@ export async function discoverPublicServers(input: {
 }): Promise<ServerPayload[]> {
   const data = await requestJson<unknown>('/servers/discovery/public', {
     query: {
-      query: input.query,
-      page: input.page,
-      limit: input.limit,
+      q: input.query,
     },
   });
 
@@ -83,8 +81,8 @@ export async function renameServer(
 export async function createServerInvitation(
   serverId: string,
   expiresInHours?: number,
-): Promise<ServerInvitationPayload> {
-  return requestJson<ServerInvitationPayload>(`/servers/${serverId}/invitation`, {
+): Promise<ServerInvitationPayload | string> {
+  return requestJson<ServerInvitationPayload | string>(`/servers/${serverId}/invitation`, {
     method: 'POST',
     body: {
       expiresInHours,

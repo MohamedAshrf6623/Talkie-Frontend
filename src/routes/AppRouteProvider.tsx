@@ -1,5 +1,4 @@
-import { Text } from '@chakra-ui/layout';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   BrowserRouter as Router,
   Switch,
@@ -14,12 +13,9 @@ import OAuthCallbackView from '../ui/views/OAuthCallbackView';
 import SettingsView from '../ui/views/SettingsView';
 import ResetPasswordView from '../ui/views/ResetPasswordView';
 import AdminManagementView from '../ui/views/AdminManagementView';
+import LoginView from '../ui/views/LoginView';
 import { getAccessToken } from '../app/authStorage';
-
-export const DEFAULT_CHANNEL_ID = '4caf111f-ed31-4e81-8735-f92d5860c878';
-export const DEFAULT_SERVER_ID = 'a246a23f-c43b-446d-a1ba-7219c53b94c6';
-export const DEFAULT_REDIRECT_ROUTE = `/servers/${DEFAULT_SERVER_ID}/channels/${DEFAULT_CHANNEL_ID}`;
-export const OTHER_REDIRECT_ROUTE = `/servers/98382d04-9d6d-4b98-9dd8-9c980a4e5b0c/channels/cd9d9bbb-4202-4aa1-88ec-21c17d809301`;
+import { resolveDefaultRedirectRoute } from './defaultRoute';
 
 function hasAdminRole() {
   try {
@@ -33,6 +29,34 @@ function hasAdminRole() {
   } catch {
     return false;
   }
+}
+
+function DefaultRedirect() {
+  const [route, setRoute] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    resolveDefaultRedirectRoute().then((nextRoute) => {
+      if (isMounted) {
+        setRoute(nextRoute);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  return route ? <Redirect to={route} /> : null;
+}
+
+function RootEntry() {
+  if (!getAccessToken()) {
+    return <Redirect to="/login" />;
+  }
+
+  return <DefaultRedirect />;
 }
 
 const AppRouteProvider = () => {
@@ -53,45 +77,58 @@ const AppRouteProvider = () => {
 
         <Route path="/oauth" component={OAuthCallbackView} exact />
 
-        <Redirect from="/" to={DEFAULT_REDIRECT_ROUTE} exact />
+        <Route path="/login" component={LoginView} exact />
 
-        <Route path="/servers/:path?">
-          <Switch>
-            {/* <Redirect from="/servers" to={DEFAULT_REDIRECT_ROUTE} exact /> */}
+        <Route path="/" component={RootEntry} exact />
 
-            <AppMainLayout>
-              <Route
-                path="/servers/:serverId/channels/:channelId"
-                component={IndexView}
-                exact
-              ></Route>
-            </AppMainLayout>
+        <Route
+          path="/servers/:path?"
+          render={() =>
+            !getAccessToken() ? (
+              <Redirect to="/login" />
+            ) : (
+              <Switch>
+                <AppMainLayout>
+                  <Route
+                    path="/servers/:serverId/channels/:channelId"
+                    component={IndexView}
+                    exact
+                  />
+                </AppMainLayout>
 
-            <Route path="*" component={NotFoundView}></Route>
-          </Switch>
-        </Route>
+                <Route path="*" component={NotFoundView} />
+              </Switch>
+            )
+          }
+        />
 
-        <Route path="/settings/:path?">
-          {!getAccessToken() ? <Redirect to={DEFAULT_REDIRECT_ROUTE} /> : null}
-          <Switch>
-            <SettingsLayout>
-              <Route path="/settings/" component={SettingsView} exact />
-              <Route
-                path="/settings/admin"
-                render={() =>
-                  hasAdminRole() ? (
-                    <AdminManagementView />
-                  ) : (
-                    <Redirect to="/settings/" />
-                  )
-                }
-                exact
-              />
-            </SettingsLayout>
+        <Route
+          path="/settings/:path?"
+          render={() =>
+            !getAccessToken() ? (
+              <Redirect to="/login" />
+            ) : (
+              <Switch>
+                <SettingsLayout>
+                  <Route path="/settings/" component={SettingsView} exact />
+                  <Route
+                    path="/settings/admin"
+                    render={() =>
+                      hasAdminRole() ? (
+                        <AdminManagementView />
+                      ) : (
+                        <Redirect to="/settings/" />
+                      )
+                    }
+                    exact
+                  />
+                </SettingsLayout>
 
-            <Route path="*" component={NotFoundView}></Route>
-          </Switch>
-        </Route>
+                <Route path="*" component={NotFoundView} />
+              </Switch>
+            )
+          }
+        />
 
         <Route path="*" component={NotFoundView}></Route>
       </Switch>

@@ -13,7 +13,15 @@ export type UserPayload = {
 
 export async function fetchUsers(): Promise<UserPayload[]> {
   const data = await requestJson<unknown>('/users');
-  return Array.isArray(data) ? (data as UserPayload[]) : [];
+  if (Array.isArray(data)) {
+    return data as UserPayload[];
+  }
+
+  if (Array.isArray((data as { data?: unknown[] } | null)?.data)) {
+    return ((data as { data?: unknown[] }).data ?? []) as UserPayload[];
+  }
+
+  return [];
 }
 
 export async function fetchCurrentUser(): Promise<UserPayload | null> {

@@ -35,7 +35,11 @@ export default function ResetPasswordView() {
     setStatus('');
 
     try {
-      await resetPassword({ newPassword, resetToken });
+      await resetPassword({
+        newPassword,
+        newPasswordConfirm: confirmPassword,
+        resetToken,
+      });
 
       setStatus('Password updated successfully. You can sign in now.');
       setNewPassword('');
