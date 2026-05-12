@@ -3,11 +3,12 @@ import React, { useEffect, useState } from 'react';
 import { Text } from '@chakra-ui/layout';
 import AppMemberGroup from './AppMemberGroup';
 import AppMemberListItem from './AppMemberListItem';
-import { fetchUsers } from '../../app/services/user.service';
+import { fetchCurrentUser } from '../../app/services/user.service';
 
 export default function AppMemberList() {
   const [users, setUsers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     let isMounted = true;
@@ -15,12 +16,16 @@ export default function AppMemberList() {
     async function loadUsers() {
       try {
         setIsLoading(true);
-        const data = await fetchUsers();
+        setErrorMessage('');
+        const currentUser = await fetchCurrentUser();
         if (isMounted) {
-          setUsers(Array.isArray(data) ? data : []);
+          setUsers(currentUser ? [currentUser] : []);
         }
       } catch (error) {
         console.error('Error fetching users:', error);
+        if (isMounted) {
+          setErrorMessage('Unable to load member list.');
+        }
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -48,6 +53,18 @@ export default function AppMemberList() {
         overflowY: 'scroll',
       }}
     >
+      {isLoading ? (
+        <Text color="whiteAlpha.600" fontSize="sm" marginBottom="12px">
+          Loading members...
+        </Text>
+      ) : null}
+
+      {errorMessage ? (
+        <Text color="red.300" fontSize="sm" marginBottom="12px">
+          {errorMessage}
+        </Text>
+      ) : null}
+
       {users.length ? (
         <Box marginBottom="25px">
           <Text color="gray.400" fontSize="xs" fontWeight="bold">

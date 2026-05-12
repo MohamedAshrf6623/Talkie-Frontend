@@ -94,6 +94,18 @@ function AppLeftSidebarTopbar() {
   const [authStatus, setAuthStatus] = useState('');
   const [isSigningIn, setIsSigningIn] = useState(false);
 
+  useEffect(() => {
+    const pendingTfaLoginToken = localStorage.getItem('pending_tfa_login_token');
+    if (!pendingTfaLoginToken) {
+      return;
+    }
+
+    setAuthMode('signin');
+    setTfaLoginToken(pendingTfaLoginToken);
+    setAuthStatus('Two-factor authentication is required. Enter your 6-digit code.');
+    onOpen();
+  }, [onOpen]);
+
   function decodeJwtPayload(token: string) {
     const payloadPart = token.split('.')[1];
     if (!payloadPart) {
@@ -176,11 +188,7 @@ function AppLeftSidebarTopbar() {
 
       onClose();
       window.location.reload();
-      <Avatar
-        src={user?.avatar ?? undefined}
-        size="sm"
-        name={user?.name ?? 'Guest'}
-      />;
+    } catch (error) {
       toast({
         title: 'Login failed',
         description:
@@ -216,6 +224,7 @@ function AppLeftSidebarTopbar() {
         email?: string;
       } | null;
 
+      localStorage.removeItem('pending_tfa_login_token');
       localStorage.setItem('access_token', accessToken);
       localStorage.removeItem('token');
       localStorage.setItem(

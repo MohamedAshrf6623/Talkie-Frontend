@@ -365,10 +365,12 @@ class QueryBuilder {
     socket.off('message:created', emitInsert);
     socket.off('message:updated', emitUpdate);
     socket.off('message:deleted', emitDelete);
+    socket.off('message:deletedForEveryone', emitDelete);
 
     socket.on('message:created', emitInsert);
     socket.on('message:updated', emitUpdate);
     socket.on('message:deleted', emitDelete);
+    socket.on('message:deletedForEveryone', emitDelete);
 
     this.realtimeSubscribed = true;
   }

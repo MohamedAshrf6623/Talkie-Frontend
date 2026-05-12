@@ -103,6 +103,13 @@ export async function deleteMessage(messageId: string) {
   });
 }
 
+export async function deleteMessageForEveryone(messageId: string) {
+  return requestJson(`/messages/${messageId}`, {
+    method: 'DELETE',
+    query: { scope: 'everyone' },
+  });
+}
+
 export async function editMessage(messageId: string, text: string) {
   return requestJson(`/messages/${messageId}`, {
     method: 'PATCH',
@@ -149,7 +156,7 @@ export async function uploadMessageFiles(channelId: string, files: File[]) {
     formData.append('files', file);
   });
 
-  const data = await requestJson<unknown>('/messages/upload', {
+  const data = await requestJson<unknown>('/files/upload', {
     method: 'POST',
     body: formData,
   });

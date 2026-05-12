@@ -12,13 +12,18 @@ import { Spinner } from '@chakra-ui/spinner';
 import { useAuth } from '../../hooks/useAuth';
 import {
   deleteMessage as deleteChatMessage,
+  deleteMessageForEveryone as deleteChatMessageForEveryone,
   editMessage as editChatMessage,
   fetchMessages as fetchChannelMessages,
   getChannel,
   normalizeMessage,
   toggleMessageReaction as toggleChatReaction,
 } from '../../app/services/message.service';
-import { canDeleteMessage, canEditMessage } from '../../app/access-control';
+import {
+  canDeleteMessage,
+  canDeleteMessageForEveryone,
+  canEditMessage,
+} from '../../app/access-control';
 import { normalizeBlobUrl } from '../../app/services/api.service';
 import { useSocketEvent } from '../../hooks/useSocketEvent';
 
@@ -206,6 +211,15 @@ export default function AppChatContainer({
   useSocketEvent<any>(
     getChatSocket,
     'message:deleted',
+    (payload) => {
+      setMessages((old) => old.filter((item) => item.id !== payload?.id));
+    },
+    [],
+  );
+
+  useSocketEvent<any>(
+    getChatSocket,
+    'message:deletedForEveryone',
     (payload) => {
       setMessages((old) => old.filter((item) => item.id !== payload?.id));
     },
@@ -449,9 +463,15 @@ function AppMessageContainer({
 }: AppMessageContainerProps) {
   const canEditOwnMessage = canEditMessage(currentUserId, message.sent_by);
   const canDeleteOwnMessage = canDeleteMessage(currentUserId, message.sent_by);
+  const canDeleteForEveryone = canDeleteMessageForEveryone(
+    currentUserId,
+    message.sent_by,
+    message.created_at,
+  );
   const [isHovering, setIsHovering] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(message.text);
+  const toast = useToast();
 
   const reactionGroups = (message.reactions ?? []).reduce(
     (groups, reaction) => {
@@ -489,6 +509,25 @@ function AppMessageContainer({
       onMessageUpdated();
     } catch (error) {
       console.error('Failed to delete message', error);
+    }
+  }
+
+  async function deleteForEveryone() {
+    try {
+      await deleteChatMessageForEveryone(String(message.id));
+      onMessageUpdated();
+    } catch (error: any) {
+      const errorMessage =
+        error?.message ?? 'Failed to delete message for everyone';
+      toast({
+        title: 'Cannot delete for everyone',
+        description: errorMessage,
+        status: 'warning',
+        duration: 4000,
+        position: 'top',
+        isClosable: true,
+      });
+      console.error('Failed to delete message for everyone', error);
     }
   }
 
@@ -730,7 +769,7 @@ function AppMessageContainer({
           ) : null}
           <button
             onClick={deleteMessage}
-            title="Delete"
+            title="Delete for me"
             style={{
               background: 'none',
               border: 'none',
@@ -742,6 +781,23 @@ function AppMessageContainer({
           >
             🗑️
           </button>
+          {canDeleteForEveryone && (
+            <button
+              onClick={deleteForEveryone}
+              title="Delete for everyone (within 24h)"
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#faa61a',
+                cursor: 'pointer',
+                fontSize: '12px',
+                padding: '2px 4px',
+                fontWeight: 600,
+              }}
+            >
+              🗑️ All
+            </button>
+          )}
         </Box>
       )}
     </Box>

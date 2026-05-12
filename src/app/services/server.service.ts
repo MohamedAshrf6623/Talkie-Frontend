@@ -7,8 +7,36 @@ type ServerPayload = {
   isPublic?: boolean;
 };
 
+type ServerInvitationPayload = {
+  inviteCode: string;
+  serverId?: string;
+  createdAt?: string;
+  expiresAt?: string | null;
+};
+
 export async function fetchServers(): Promise<ServerPayload[]> {
   const data = await requestJson<unknown>('/servers');
+  return Array.isArray(data) ? (data as ServerPayload[]) : [];
+}
+
+export async function fetchMyServers(userId: string): Promise<ServerPayload[]> {
+  const data = await requestJson<unknown>(`/servers/mine/${userId}`);
+  return Array.isArray(data) ? (data as ServerPayload[]) : [];
+}
+
+export async function discoverPublicServers(input: {
+  query?: string;
+  page?: number;
+  limit?: number;
+}): Promise<ServerPayload[]> {
+  const data = await requestJson<unknown>('/servers/discovery/public', {
+    query: {
+      query: input.query,
+      page: input.page,
+      limit: input.limit,
+    },
+  });
+
   return Array.isArray(data) ? (data as ServerPayload[]) : [];
 }
 
@@ -50,4 +78,23 @@ export async function renameServer(
     method: 'PATCH',
     body: { name },
   });
+}
+
+export async function createServerInvitation(
+  serverId: string,
+  expiresInHours?: number,
+): Promise<ServerInvitationPayload> {
+  return requestJson<ServerInvitationPayload>(`/servers/${serverId}/invitation`, {
+    method: 'POST',
+    body: {
+      expiresInHours,
+    },
+  });
+}
+
+export async function fetchServerInvitations(
+  serverId: string,
+): Promise<ServerInvitationPayload[]> {
+  const data = await requestJson<unknown>(`/servers/${serverId}/invitation`);
+  return Array.isArray(data) ? (data as ServerInvitationPayload[]) : [];
 }

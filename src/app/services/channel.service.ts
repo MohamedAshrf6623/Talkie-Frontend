@@ -11,6 +11,17 @@ export async function fetchChannels(): Promise<ChannelPayload[]> {
   return Array.isArray(data) ? (data as ChannelPayload[]) : [];
 }
 
+export async function fetchVisibleChannelsByServer(
+  serverId: string,
+  userId: string,
+): Promise<ChannelPayload[]> {
+  const data = await requestJson<unknown>(
+    `/channels/server/${serverId}/visible/${userId}`,
+  );
+
+  return Array.isArray(data) ? (data as ChannelPayload[]) : [];
+}
+
 export async function createChannel(payload: {
   name: string;
   serverId: string;

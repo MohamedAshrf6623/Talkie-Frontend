@@ -1,11 +1,19 @@
 import { Box } from '@chakra-ui/layout';
 import React, { useEffect, useState } from 'react';
 import AppCategoryChannelList from './AppCategoryChannelList';
-import { fetchServers } from '../../app/services/server.service';
+import {
+  discoverPublicServers,
+  fetchMyServers,
+  fetchServers,
+} from '../../app/services/server.service';
+import { useAuth } from '../../hooks/useAuth';
+import { Text } from '@chakra-ui/react';
 
 export default function AppCategoryList() {
+  const user = useAuth();
   const [servers, setServers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     let isMounted = true;
@@ -13,12 +21,23 @@ export default function AppCategoryList() {
     async function loadServers() {
       try {
         setIsLoading(true);
-        const data = await fetchServers();
+        setErrorMessage('');
+
+        const data = user?.id
+          ? await fetchMyServers(user.id)
+          : await discoverPublicServers({ limit: 20 });
+
+        const fallbackData =
+          Array.isArray(data) && data.length === 0 ? await fetchServers() : data;
+
         if (isMounted) {
-          setServers(Array.isArray(data) ? data : []);
+          setServers(Array.isArray(fallbackData) ? fallbackData : []);
         }
       } catch (error) {
         console.error('Error fetching servers:', error);
+        if (isMounted) {
+          setErrorMessage('Unable to load servers.');
+        }
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -31,10 +50,37 @@ export default function AppCategoryList() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [user?.id]);
 
-  // Fallback to placeholder if no servers loaded
-  const displayServers = servers.length > 0 ? servers : [{}, {}, {}, {}];
+  if (isLoading) {
+    return (
+      <Box flexGrow={1} paddingTop="10px" paddingX="10px">
+        <Text color="whiteAlpha.600" fontSize="sm">
+          Loading servers...
+        </Text>
+      </Box>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <Box flexGrow={1} paddingTop="10px" paddingX="10px">
+        <Text color="red.300" fontSize="sm">
+          {errorMessage}
+        </Text>
+      </Box>
+    );
+  }
+
+  if (!servers.length) {
+    return (
+      <Box flexGrow={1} paddingTop="10px" paddingX="10px">
+        <Text color="whiteAlpha.600" fontSize="sm">
+          No servers available.
+        </Text>
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -49,7 +95,7 @@ export default function AppCategoryList() {
       paddingTop="10px"
       paddingX="5px"
     >
-      {displayServers.map((server, idx) => (
+      {servers.map((server, idx) => (
         <AppCategoryChannelList key={server.id || idx} server={server} />
       ))}
     </Box>

@@ -1,6 +1,7 @@
 import { SearchIcon } from "@chakra-ui/icons";
-import { Box, Divider, HStack, Text } from "@chakra-ui/layout";
+import { Box, Divider, HStack, Link, Text } from "@chakra-ui/layout";
 import React from "react";
+import { Link as RouterLink } from "react-router-dom";
 import { colors } from "../theme/colors";
 
 export type SettingsLayoutProps = {
@@ -46,6 +47,9 @@ function SettingsLeftSidebar() {
         <SettingsListHeader>User Settings</SettingsListHeader>
 
         <SettingsListItem label="My Account" active />
+        <Link as={RouterLink} to="/settings/admin" _hover={{ textDecoration: 'none' }}>
+          <SettingsListItem label="Admin Management" />
+        </Link>
         <SettingsListItem label="Privacy & Safety" />
         <SettingsListItem label="Authorized Apps" />
         <SettingsListItem label="Connections" />
