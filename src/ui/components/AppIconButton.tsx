@@ -9,6 +9,8 @@ export type AppIconButtonProps = {
   withBackground?: boolean;
   size?: (string & {}) | "sm" | "md" | "lg" | "xs" | undefined;
   tooltip?: string;
+  disabled?: boolean;
+  [key: string]: any;
 };
 
 export default function AppIconButton({
@@ -18,6 +20,8 @@ export default function AppIconButton({
   withBackground,
   size,
   tooltip,
+  disabled,
+  ...rest
 }: AppIconButtonProps) {
   return (
     <Tooltip label={tooltip}>
@@ -28,8 +32,10 @@ export default function AppIconButton({
         borderRadius="50%"
         marginX="1px"
         size={size}
+        isDisabled={disabled}
         backgroundColor={!withBackground ? "transparent" : ""}
         color={!withBackground ? "white" : ""}
+        {...rest}
         _active={
           !withBackground
             ? {

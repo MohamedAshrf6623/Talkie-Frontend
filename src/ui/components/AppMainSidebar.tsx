@@ -1,6 +1,8 @@
 import { Avatar } from '@chakra-ui/avatar';
 import { Box, Divider, Text, VStack } from '@chakra-ui/layout';
 import React, { useEffect, useState } from 'react';
+import { useHistory } from 'react-router-dom';
+import { AddIcon } from '@chakra-ui/icons';
 import {
   discoverPublicServers,
   fetchMyServers,
@@ -12,6 +14,7 @@ import { colors } from '../theme/colors';
 
 export default function AppMainSidebar() {
   const user = useAuth();
+  const history = useHistory();
   const [servers, setServers] = useState<any[]>([]);
   const logoSrc = '/talkie-logo.png';
 
@@ -86,13 +89,24 @@ export default function AppMainSidebar() {
           />
         ))}
 
-        {!servers.length && (
-          <>
-            <Avatar size="md" cursor="pointer" name="" />
-            <Avatar size="md" cursor="pointer" name="" />
-            <Avatar size="md" cursor="pointer" name="" />
-            <Avatar size="md" cursor="pointer" name="" />
-          </>
+        {user?.id && (
+          <Box
+            cursor="pointer"
+            onClick={() => history.push('/settings')}
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            width="45px"
+            height="45px"
+            borderRadius="50%"
+            backgroundColor="whiteAlpha.200"
+            _hover={{ backgroundColor: 'green.500', color: 'white', borderRadius: '30%' }}
+            color="green.500"
+            transition="all 0.2s"
+            title="Create a Server"
+          >
+            <AddIcon />
+          </Box>
         )}
       </VStack>
     </Box>

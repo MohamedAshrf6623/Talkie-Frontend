@@ -1,6 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Box, Text } from '@chakra-ui/layout';
-import { AddIcon, AtSignIcon, CalendarIcon, LinkIcon } from '@chakra-ui/icons';
+import {
+  AddIcon,
+  AtSignIcon,
+  CalendarIcon,
+  LinkIcon,
+  ArrowForwardIcon,
+} from '@chakra-ui/icons';
 import { Input } from '@chakra-ui/input';
 import AppIconButton from './AppIconButton';
 import { colors } from '../theme/colors';
@@ -148,19 +154,21 @@ export default function AppChatInput({
     }
   }
 
-  function onKeyPress({ key }: any) {
+  function handleSend() {
     if (!message && !uploadedAttachments?.length) {
       return;
     }
 
-    if (key === 'Enter') {
-      console.log('onKeyPress', { key, message });
+    sendMessage({
+      channelId,
+      message,
+      attachments: uploadedAttachments ?? [],
+    });
+  }
 
-      sendMessage({
-        channelId,
-        message,
-        attachments: uploadedAttachments ?? [],
-      });
+  function onKeyPress({ key }: any) {
+    if (key === 'Enter') {
+      handleSend();
     }
   }
 
@@ -242,7 +250,13 @@ export default function AppChatInput({
           icon={<CalendarIcon />}
           onClick={openFilePicker}
         />
-        <AppIconButton ariaLabel="Select giphy" icon={<LinkIcon />} />
+        <AppIconButton
+          ariaLabel="Send message"
+          icon={<ArrowForwardIcon />}
+          onClick={handleSend}
+          disabled={isLoading || (!message.trim() && !uploadedAttachments?.length)}
+          colorScheme="blue"
+        />
         <AppIconButton ariaLabel="Select emoji" icon={<AtSignIcon />} />
       </Box>
       {uploadedAttachments?.length ? (

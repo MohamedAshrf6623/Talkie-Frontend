@@ -59,34 +59,6 @@ export default function AppChatContainer({
     userNamesRef.current = userNames;
   }, [userNames]);
 
-  async function toggleReaction(messageId: string, emoji: string) {
-    const currentMessage = messages.find((message) => message.id === messageId);
-    const hasReaction = (currentMessage?.reactions ?? []).some(
-      (reaction) =>
-        reaction.emoji === emoji && reaction.userId === currentUser?.id,
-    );
-
-    try {
-      await toggleChatReaction(messageId, emoji, hasReaction);
-    } catch (error) {
-      console.error('Failed to update reaction', error);
-    }
-  }
-
-  const notifyNewMessage = useCallback(
-    (payload: any) => {
-      toast({
-        title: 'New message',
-        description: payload?.text,
-        status: 'info',
-        duration: 1000,
-        position: 'top',
-        isClosable: true,
-      });
-    },
-    [toast],
-  );
-
   const fetchMessages = useCallback(async () => {
     setLoading(true);
 
@@ -108,6 +80,40 @@ export default function AppChatContainer({
       setLoading(false);
     }
   }, [channelId]);
+
+  async function toggleReaction(messageId: string, emoji: string) {
+    const currentMessage = messages.find((message) => message.id === messageId);
+    const hasReaction = (currentMessage?.reactions ?? []).some(
+      (reaction) =>
+        reaction.emoji === emoji && reaction.userId === currentUser?.id,
+    );
+
+    try {
+      await toggleChatReaction(messageId, emoji, hasReaction);
+      // No manual fetch here! WebSocket will handle the state update.
+    } catch (error) {
+      console.error('Failed to update reaction', error);
+      toast({
+        title: 'Reaction failed',
+        status: 'error',
+        duration: 2000,
+      });
+    }
+  }
+
+  const notifyNewMessage = useCallback(
+    (payload: any) => {
+      toast({
+        title: 'New message',
+        description: payload?.text,
+        status: 'info',
+        duration: 1000,
+        position: 'top',
+        isClosable: true,
+      });
+    },
+    [toast],
+  );
 
   const scrollToBottom = useCallback(() => {
     bottom.current?.scrollIntoView({ behavior: 'smooth' });
@@ -172,6 +178,7 @@ export default function AppChatContainer({
         text: payload?.text ?? payload?.content,
       });
       setMessages((old) => {
+        console.log('[Socket] message:created received', payload.id);
         if (old.some((item) => item.id === newMessage.id)) {
           return old.map((item) =>
             item.id === newMessage.id ? newMessage : item,
@@ -180,6 +187,7 @@ export default function AppChatContainer({
 
         return [newMessage, ...old];
       });
+      scrollToBottom();
     },
     [channelId, notifyNewMessage],
   );
@@ -192,7 +200,7 @@ export default function AppChatContainer({
       if (payloadChannelId && payloadChannelId !== channelId) {
         return;
       }
-
+      console.log('[Socket] message:updated received', payload.id);
       setMessages((old) =>
         old.map((item) =>
           item.id === payload.id
@@ -215,24 +223,37 @@ export default function AppChatContainer({
     getChatSocket,
     'message:deleted',
     (payload) => {
+      const payloadChannelId = payload?.channelId ?? payload?.channel_id;
+      if (payloadChannelId && payloadChannelId !== channelId) {
+        return;
+      }
       setMessages((old) => old.filter((item) => item.id !== payload?.id));
     },
-    [],
+    [channelId],
   );
 
   useSocketEvent<any>(
     getChatSocket,
     'message:deletedForEveryone',
     (payload) => {
+      const payloadChannelId = payload?.channelId ?? payload?.channel_id;
+      if (payloadChannelId && payloadChannelId !== channelId) {
+        return;
+      }
       setMessages((old) => old.filter((item) => item.id !== payload?.id));
     },
-    [],
+    [channelId],
   );
 
   useSocketEvent<any>(
     getChatSocket,
     'reaction:added',
     (payload) => {
+      const payloadChannelId = payload?.channelId ?? payload?.channel_id;
+      if (payloadChannelId && payloadChannelId !== channelId) {
+        return;
+      }
+
       setMessages((old) =>
         old.map((item) => {
           if (item.id !== payload?.messageId) {
@@ -259,21 +280,26 @@ export default function AppChatContainer({
                 messageId: payload.messageId,
                 userId: payload.userId,
                 emoji: payload.emoji,
-                created_at: new Date(),
-                updated_at: new Date(),
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
               },
             ],
           };
         }),
       );
     },
-    [],
+    [channelId],
   );
 
   useSocketEvent<any>(
     getChatSocket,
     'reaction:removed',
     (payload) => {
+      const payloadChannelId = payload?.channelId ?? payload?.channel_id;
+      if (payloadChannelId && payloadChannelId !== channelId) {
+        return;
+      }
+
       setMessages((old) =>
         old.map((item) =>
           item.id === payload.messageId
@@ -291,7 +317,7 @@ export default function AppChatContainer({
         ),
       );
     },
-    [],
+    [channelId],
   );
 
   useSocketEvent<any>(
@@ -314,8 +340,9 @@ export default function AppChatContainer({
     let isMounted = true;
     let roomType: 'channel' | 'dm' = 'channel';
 
+    const socket = getChatSocket();
+
     async function joinRoom() {
-      const socket = getChatSocket();
       if (!socket) {
         return;
       }
@@ -333,7 +360,21 @@ export default function AppChatContainer({
       }
     }
 
-    void joinRoom();
+    if (socket) {
+      if (socket.connected) {
+        void joinRoom();
+      }
+
+      // Rejoin room on every reconnection
+      socket.on('connect', joinRoom);
+    }
+
+    const retryInterval = setInterval(() => {
+      if (socket && socket.connected) {
+        void joinRoom();
+        clearInterval(retryInterval);
+      }
+    }, 2000);
 
     fetchMessages().then(() => {
       if (isMounted) {
@@ -343,10 +384,12 @@ export default function AppChatContainer({
 
     return () => {
       isMounted = false;
-      const socket = getChatSocket();
+      clearInterval(retryInterval);
       if (!socket) {
         return;
       }
+
+      socket.off('connect', joinRoom);
 
       if (roomType === 'dm') {
         socket.emit('dm:leave', { channelId });
@@ -430,6 +473,11 @@ export default function AppChatContainer({
         channelId={channelId}
         replyTarget={replyTarget}
         onClearReplyTarget={() => setReplyTarget(null)}
+        onMessageSent={() => {
+          // No fetch needed here, socket handles real-time updates.
+          // Just scroll to bottom.
+          scrollToBottom();
+        }}
       />
 
       <AppThreadPanel
@@ -439,8 +487,7 @@ export default function AppChatContainer({
         serverId={serverId}
         channelId={channelId}
         onMessageSent={() => {
-          // Refresh messages when a reply is sent in the thread
-          fetchMessages();
+          // No fetch needed here
         }}
       />
     </>
@@ -484,13 +531,14 @@ function AppMessageContainer({
         reactedByMe: false,
       };
 
-      existing.count += 1;
-      if (reaction.userId === currentUserId) {
-        existing.reactedByMe = true;
-      }
-
-      groups[reaction.emoji] = existing;
-      return groups;
+      return {
+        ...groups,
+        [reaction.emoji]: {
+          emoji: reaction.emoji,
+          count: existing.count + 1,
+          reactedByMe: existing.reactedByMe || reaction.userId === currentUserId,
+        },
+      };
     },
     {} as Record<
       string,
@@ -498,17 +546,23 @@ function AppMessageContainer({
     >,
   );
 
-  const isToday =
-    new Date(message.created_at).toLocaleDateString() ===
-    new Date().toLocaleDateString();
+  async function saveEdit() {
+    if (!editText.trim()) {
+      return;
+    }
 
-  const date = `${
-    isToday ? 'Today' : new Date(message.created_at).toLocaleDateString()
-  } at ${new Date(message.created_at).toLocaleTimeString()}`;
+    try {
+      await editChatMessage(message.id!, editText);
+      setIsEditing(false);
+      onMessageUpdated();
+    } catch (error) {
+      console.error('Failed to edit message', error);
+    }
+  }
 
   async function deleteMessage() {
     try {
-      await deleteChatMessage(String(message.id));
+      await deleteChatMessage(message.id!);
       onMessageUpdated();
     } catch (error) {
       console.error('Failed to delete message', error);
@@ -517,37 +571,17 @@ function AppMessageContainer({
 
   async function deleteForEveryone() {
     try {
-      await deleteChatMessageForEveryone(String(message.id));
+      await deleteChatMessageForEveryone(message.id!);
       onMessageUpdated();
-    } catch (error: any) {
-      const errorMessage =
-        error?.message ?? 'Failed to delete message for everyone';
-      toast({
-        title: 'Cannot delete for everyone',
-        description: errorMessage,
-        status: 'warning',
-        duration: 4000,
-        position: 'top',
-        isClosable: true,
-      });
+    } catch (error) {
       console.error('Failed to delete message for everyone', error);
     }
   }
 
-  async function saveEdit() {
-    if (!editText.trim()) {
-      return;
-    }
-
-    try {
-      await editChatMessage(String(message.id), editText);
-      setIsEditing(false);
-      onMessageUpdated();
-    } catch (error) {
-      console.error('Failed to edit message');
-      return;
-    }
-  }
+  const date = new Date(message.created_at).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
   return (
     <Box
@@ -733,7 +767,7 @@ function AppMessageContainer({
                     }}
                     title="View thread"
                   >
-                    💬
+                    🧵
                   </button>
                 </>
               )}
@@ -767,7 +801,7 @@ function AppMessageContainer({
                 padding: '2px 4px',
               }}
             >
-              ✏️
+              📝
             </button>
           ) : null}
           <button

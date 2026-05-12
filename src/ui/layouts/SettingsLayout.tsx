@@ -1,14 +1,17 @@
-import { SearchIcon } from "@chakra-ui/icons";
-import { Box, Divider, HStack, Link, Text } from "@chakra-ui/layout";
+import { CloseIcon } from "@chakra-ui/icons";
+import { Box, Divider, Link, Text, IconButton } from "@chakra-ui/react";
 import React from "react";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useHistory } from "react-router-dom";
 import { colors } from "../theme/colors";
+import { supabase } from "../../app/supabase";
 
 export type SettingsLayoutProps = {
   children: React.ReactNode;
 };
 
 export default function SettingsLayout({ children }: SettingsLayoutProps) {
+  const history = useHistory();
+
   return (
     <Box display="flex" height="100vh">
       <SettingsLeftSidebar />
@@ -20,7 +23,18 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
         paddingX="30px"
         paddingY="50px"
         color="white"
+        position="relative"
       >
+        <Box position="absolute" top="20px" right="30px">
+          <IconButton
+            aria-label="Close Settings"
+            icon={<CloseIcon />}
+            variant="ghost"
+            color="gray.400"
+            _hover={{ color: 'white', backgroundColor: 'whiteAlpha.200' }}
+            onClick={() => history.push('/')}
+          />
+        </Box>
         {children}
       </Box>
     </Box>
@@ -28,6 +42,7 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
 }
 
 function SettingsLeftSidebar() {
+  const history = useHistory();
   return (
     <Box
       flex="1"
@@ -50,54 +65,20 @@ function SettingsLeftSidebar() {
         <Link as={RouterLink} to="/settings/admin" _hover={{ textDecoration: 'none' }}>
           <SettingsListItem label="Admin Management" />
         </Link>
-        <SettingsListItem label="Privacy & Safety" />
-        <SettingsListItem label="Authorized Apps" />
-        <SettingsListItem label="Connections" />
 
         <AppSettingsDivider />
 
-        <SettingsListHeader>Billing Settings</SettingsListHeader>
-        <SettingsListItem>Discord Nitro</SettingsListItem>
-        <SettingsListItem>Server Boost</SettingsListItem>
-        <SettingsListItem>Gift Inventory</SettingsListItem>
-        <SettingsListItem>Billing</SettingsListItem>
-
-        <AppSettingsDivider />
-
-        <SettingsListHeader>App Settings</SettingsListHeader>
-        <SettingsListItem>Appearance</SettingsListItem>
-        <SettingsListItem>Accessibility</SettingsListItem>
-        <SettingsListItem>Voice & Video</SettingsListItem>
-        <SettingsListItem>Text & Images</SettingsListItem>
-        <SettingsListItem>Notifications</SettingsListItem>
-        <SettingsListItem>Keybinds</SettingsListItem>
-        <SettingsListItem>Language</SettingsListItem>
-        <SettingsListItem>Windows Settings</SettingsListItem>
-        <SettingsListItem>Streamer Mode</SettingsListItem>
-        <SettingsListItem>Advanced</SettingsListItem>
-
-        <AppSettingsDivider />
-
-        <SettingsListHeader>Gaming Settings</SettingsListHeader>
-        <SettingsListItem>Game Activity</SettingsListItem>
-        <SettingsListItem>Overlay</SettingsListItem>
-
-        <AppSettingsDivider />
-
-        <SettingsListHeader>Change Log</SettingsListHeader>
-        <SettingsListItem>HypeSquad</SettingsListItem>
-
-        <AppSettingsDivider />
-
-        <SettingsListItem color="red.600" hoverBackgroundColor="red.900">Log Out</SettingsListItem>
-
-        <AppSettingsDivider />
-
-        <HStack>
-          <SearchIcon color="white" />
-          <SearchIcon color="white" />
-          <SearchIcon color="white" />
-        </HStack>
+        <SettingsListItem
+          color="red.600"
+          hoverBackgroundColor="red.900"
+          onClick={async () => {
+            await supabase.auth.signOut();
+            history.replace('/login');
+            window.location.reload();
+          }}
+        >
+          Log Out
+        </SettingsListItem>
       </Box>
     </Box>
   );
@@ -109,6 +90,7 @@ type SettingsListItemProps = {
   children?: React.ReactNode;
   color?: string;
   hoverBackgroundColor?: string;
+  onClick?: () => void;
 };
 
 function SettingsListItem({
@@ -116,10 +98,12 @@ function SettingsListItem({
   label,
   color,
   hoverBackgroundColor,
+  onClick,
   children,
 }: SettingsListItemProps) {
   return (
     <Box
+      onClick={onClick}
       paddingX="5px"
       paddingRight="100px"
       paddingY="5px"

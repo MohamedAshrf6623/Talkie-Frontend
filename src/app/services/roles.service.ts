@@ -20,7 +20,7 @@ export async function createRole(payload: {
   position?: number;
   permissions?: string;
   isEveryone?: boolean;
-}) {
+}): Promise<RoleRecord> {
   return requestJson<RoleRecord>('/roles', {
     method: 'POST',
     body: payload,

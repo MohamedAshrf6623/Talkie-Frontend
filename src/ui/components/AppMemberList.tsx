@@ -78,14 +78,7 @@ export default function AppMemberList() {
             />
           ))}
         </Box>
-      ) : (
-        <>
-          <AppMemberGroup label="Novice" />
-          <AppMemberGroup label="Angular Team Member" />
-          <AppMemberGroup label="Google Developer Expert" />
-          <AppMemberGroup label="Flutter Team Member" />
-        </>
-      )}
+      ) : null}
     </Box>
   );
 }

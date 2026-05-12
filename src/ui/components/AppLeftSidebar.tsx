@@ -57,6 +57,7 @@ export default function AppLeftSidebar() {
 
 function AppLeftSidebarTopbar() {
   const history = useHistory();
+  const user = useAuth();
 
   return (
     <Box
@@ -85,19 +86,24 @@ function AppLeftSidebarTopbar() {
           </HStack>
         </MenuButton>
         <MenuList>
-          <MenuItem onClick={() => history.push('/login')}>Sign In</MenuItem>
-          <MenuItem onClick={() => history.push('/login?mode=signup')}>
-            Sign Up
-          </MenuItem>
-          <MenuItem
-            onClick={async () => {
-              await supabase.auth.signOut();
-              history.replace('/login');
-              window.location.reload();
-            }}
-          >
-            Logout
-          </MenuItem>
+          {!user ? (
+            <>
+              <MenuItem onClick={() => history.push('/login')}>Sign In</MenuItem>
+              <MenuItem onClick={() => history.push('/login?mode=signup')}>
+                Sign Up
+              </MenuItem>
+            </>
+          ) : (
+            <MenuItem
+              onClick={async () => {
+                await supabase.auth.signOut();
+                history.replace('/login');
+                window.location.reload();
+              }}
+            >
+              Logout
+            </MenuItem>
+          )}
         </MenuList>
       </Menu>
     </Box>

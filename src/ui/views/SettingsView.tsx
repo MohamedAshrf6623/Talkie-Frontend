@@ -557,21 +557,21 @@ function SettingsView() {
           placeholder="Current password"
           value={oldPassword}
           onChange={(event) => setOldPassword(event.target.value)}
-          style={{ display: 'block', width: '100%', marginBottom: '8px' }}
+          style={{ display: 'block', width: '100%', marginBottom: '8px', color: 'black', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
         />
         <input
           type="password"
           placeholder="New password"
           value={newPassword}
           onChange={(event) => setNewPassword(event.target.value)}
-          style={{ display: 'block', width: '100%', marginBottom: '8px' }}
+          style={{ display: 'block', width: '100%', marginBottom: '8px', color: 'black', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
         />
         <input
           type="password"
           placeholder="Confirm new password"
           value={newPasswordConfirm}
           onChange={(event) => setNewPasswordConfirm(event.target.value)}
-          style={{ display: 'block', width: '100%', marginBottom: '8px' }}
+          style={{ display: 'block', width: '100%', marginBottom: '8px', color: 'black', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
         />
         <button onClick={changePassword} disabled={isChangingPassword}>
           Update Password
@@ -592,7 +592,7 @@ function SettingsView() {
           placeholder="6-digit TFA code"
           value={tfaToken}
           onChange={(event) => setTfaToken(event.target.value)}
-          style={{ display: 'block', width: '100%', marginBottom: '8px' }}
+          style={{ display: 'block', width: '100%', marginBottom: '8px', color: 'black', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
         />
         <button
           onClick={() => verifyTfa('enable')}
@@ -612,7 +612,7 @@ function SettingsView() {
           placeholder="Server name"
           value={newServerName}
           onChange={(event) => setNewServerName(event.target.value)}
-          style={{ display: 'block', width: '100%', marginBottom: '8px' }}
+          style={{ display: 'block', width: '100%', marginBottom: '8px', color: 'black', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
         />
         <label style={{ display: 'block', marginBottom: '8px' }}>
           <input
@@ -666,14 +666,14 @@ function SettingsView() {
           placeholder="Channel name"
           value={newChannelName}
           onChange={(event) => setNewChannelName(event.target.value)}
-          style={{ display: 'block', width: '100%', marginBottom: '8px' }}
+          style={{ display: 'block', width: '100%', marginBottom: '8px', color: 'black', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
         />
         <input
           type="text"
           placeholder="Server id"
           value={newChannelServerId}
           onChange={(event) => setNewChannelServerId(event.target.value)}
-          style={{ display: 'block', width: '100%', marginBottom: '8px' }}
+          style={{ display: 'block', width: '100%', marginBottom: '8px', color: 'black', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
         />
         <button onClick={createChannel} disabled={isCreatingChannel}>
           Create Channel
@@ -744,7 +744,7 @@ function SettingsView() {
           placeholder="Search by username, name, or email"
           value={friendSearchQuery}
           onChange={(event) => setFriendSearchQuery(event.target.value)}
-          style={{ display: 'block', width: '100%', marginBottom: '8px' }}
+          style={{ display: 'block', width: '100%', marginBottom: '8px', color: 'black', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
         />
         <button
           onClick={performFriendSearch}
@@ -847,7 +847,7 @@ function SettingsView() {
           placeholder="Invite code"
           value={inviteCode}
           onChange={(event) => setInviteCode(event.target.value)}
-          style={{ display: 'block', width: '100%', marginBottom: '8px' }}
+          style={{ display: 'block', width: '100%', marginBottom: '8px', color: 'black', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
         />
         <button onClick={previewInvitation} style={{ marginRight: '8px' }}>
           Resolve
@@ -866,7 +866,7 @@ function SettingsView() {
           placeholder="Server id"
           value={selectedServerForInvite}
           onChange={(event) => setSelectedServerForInvite(event.target.value)}
-          style={{ display: 'block', width: '100%', marginBottom: '8px' }}
+          style={{ display: 'block', width: '100%', marginBottom: '8px', color: 'black', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
         />
         <button onClick={createInvitationCode} style={{ marginRight: '8px' }}>
           Create Invitation

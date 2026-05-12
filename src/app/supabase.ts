@@ -117,18 +117,21 @@ function normalizeRealtimeMessage(record: Record<string, any>) {
 export function getChatSocket() {
   const accessToken = getStoredToken();
   if (!accessToken) {
+    if (chatSocket) {
+      chatSocket.disconnect();
+      chatSocket = null;
+    }
     return null;
   }
 
-  if (chatSocket && chatSocket.connected) {
-    const currentToken = (chatSocket.auth as { token?: string } | undefined)
-      ?.token;
+  // If socket already exists, just return it. 
+  // Socket.io will handle reconnections automatically if the connection is lost.
+  if (chatSocket) {
+    const currentToken = (chatSocket.auth as { token?: string } | undefined)?.token;
     if (currentToken === accessToken) {
       return chatSocket;
     }
-  }
-
-  if (chatSocket) {
+    // Token changed, need to recreate
     chatSocket.disconnect();
   }
 
@@ -139,6 +142,19 @@ export function getChatSocket() {
     auth: { token: accessToken },
   });
 
+  chatSocket.on('connect', () => {
+    console.log('[Socket] Connected to /chat namespace');
+  });
+
+  chatSocket.on('disconnect', (reason) => {
+    console.warn('[Socket] Disconnected from /chat namespace:', reason);
+    // DO NOT set chatSocket = null here. We want to keep the instance for auto-reconnect.
+  });
+
+  chatSocket.on('connect_error', (error) => {
+    console.error('[Socket] Connection error on /chat namespace:', error);
+  });
+
   startHeartbeat(chatSocket);
 
   return chatSocket;
@@ -147,19 +163,18 @@ export function getChatSocket() {
 export function getNotificationsSocket() {
   const accessToken = getStoredToken();
   if (!accessToken) {
+    if (notificationsSocket) {
+      notificationsSocket.disconnect();
+      notificationsSocket = null;
+    }
     return null;
   }
 
-  if (notificationsSocket && notificationsSocket.connected) {
-    const currentToken = (
-      notificationsSocket.auth as { token?: string } | undefined
-    )?.token;
+  if (notificationsSocket) {
+    const currentToken = (notificationsSocket.auth as { token?: string } | undefined)?.token;
     if (currentToken === accessToken) {
       return notificationsSocket;
     }
-  }
-
-  if (notificationsSocket) {
     notificationsSocket.disconnect();
   }
 

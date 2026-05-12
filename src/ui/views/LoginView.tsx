@@ -47,6 +47,7 @@ export default function LoginView() {
     return mode === 'signup' ? 'signup' : 'signin';
   });
   const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -208,7 +209,7 @@ export default function LoginView() {
   }
 
   async function submitSignup() {
-    if (!firstName || !username || !email || !password || !passwordConfirm) {
+    if (!firstName || !lastName || !username || !email || !password || !passwordConfirm) {
       toast({
         title: 'Missing fields',
         description: 'Fill in all fields to create an account.',
@@ -235,7 +236,7 @@ export default function LoginView() {
     try {
       await signup({
         firstName,
-        lastName: '',
+        lastName,
         email,
         username,
         password,
@@ -370,15 +371,26 @@ export default function LoginView() {
 
           {authMode === 'signup' && !tfaLoginToken ? (
             <>
-              <FormControl>
-                <FormLabel>First Name</FormLabel>
-                <Input
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="Your name"
-                  backgroundColor={colors.darkLight}
-                />
-              </FormControl>
+              <Box display="flex" gap="12px">
+                <FormControl>
+                  <FormLabel>First Name</FormLabel>
+                  <Input
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="First name"
+                    backgroundColor={colors.darkLight}
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>Last Name</FormLabel>
+                  <Input
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Last name"
+                    backgroundColor={colors.darkLight}
+                  />
+                </FormControl>
+              </Box>
               <FormControl>
                 <FormLabel>Username</FormLabel>
                 <Input
