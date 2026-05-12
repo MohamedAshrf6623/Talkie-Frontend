@@ -1,9 +1,48 @@
-# react-vite-discord-clone
+# Talkie Frontend
 
-A chat application with a Discord UI clone with Supabase as backend with real time functionality. ⚡
+Talkie is a Discord-inspired chat client built with React, Vite, TypeScript, and Chakra UI. This repository contains the frontend application for the Talkie platform, including realtime chat views, settings, admin screens, and the friend management flow.
 
-See [demo here](https://react-vite-discord-clone.vercel.app/) 🔥
+## Features
 
-![image](https://user-images.githubusercontent.com/45052332/119223663-3d38ff00-bb2d-11eb-8a28-a69a94f7c443.png)
+- Realtime chat UI with channels, direct messages, member lists, and notifications
+- Settings area for profile and account management
+- Admin management screens for roles, permissions, and access control
+- Friends flow with searchable user selection instead of manual ID entry
+- Auth-aware routing and role-based page protection
 
-Find it on Twitter! 👉 https://twitter.com/CarloMiguelDy/status/1391961657509777408
+## Requirements
+
+- Node.js 16+ recommended
+- Backend API running locally at `http://localhost:3000`, or a custom API URL set through `VITE_API_URL`
+
+## Scripts
+
+- `npm run dev` - start the Vite development server
+- `npm run build` - type-check and create a production build
+- `npm run serve` - preview the production build locally
+
+## Setup
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Start the frontend:
+
+```bash
+npm run dev
+```
+
+3. If your backend does not run on the default port, create a `.env` file with:
+
+```bash
+VITE_API_URL=http://localhost:3000
+```
+
+## Notes
+
+- The frontend expects the backend to expose the chat, user, role, access-control, and friend APIs used by the app.
+- Authentication state is cached in local storage so the UI can restore the current session on reload.
+
